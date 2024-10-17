@@ -7,6 +7,6 @@
 #include <inc/syscall.h>
 
 uint32 syscall(uint32 num, uint32 a1, uint32 a2, uint32 a3, uint32 a4, uint32 a5);
-
+void check_Param(uint32 virtual_address);
 
 #endif /* !FOS_KERN_SYSCALL_H */
