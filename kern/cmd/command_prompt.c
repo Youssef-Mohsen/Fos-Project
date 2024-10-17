@@ -455,14 +455,56 @@ int execute_command(char *command_string)
 
 int process_command(int number_of_arguments, char** arguments)
 {
-	//TODO: [PROJECT'24.MS1 - #01] [1] PLAY WITH CODE! - process_command
-
-	for (int i = 0; i < NUM_OF_COMMANDS; i++)
-	{
-		if (strcmp(arguments[0], commands[i].name) == 0)
-		{
-			return i;
-		}
-	}
-	return CMD_INVALID;
+    struct Command * element = NULL;
+    LIST_FOREACH(element, &foundCommands)
+    {
+        LIST_REMOVE(&foundCommands,element);
+    }
+    int x=0;
+    for (int i = 0; i < NUM_OF_COMMANDS; i++)
+    {
+        if (strcmp(arguments[0], commands[i].name) == 0)
+        {
+            cprintf("%d %d \n",commands[i].num_of_args,number_of_arguments-1);
+            if(commands[i].num_of_args != number_of_arguments-1)
+            {
+                if (commands[i].num_of_args == -1 && number_of_arguments-1 > 0)
+                {
+                    return i;
+                }
+                else
+                {
+                LIST_INSERT_HEAD(&foundCommands , &commands[i]);
+                return CMD_INV_NUM_ARGS;
+                }
+            }
+            else
+            {
+            return i;
+            }
+        }
+        else
+        {
+            const char* ptr1 = arguments[0];
+            const char* ptr2 = commands[i].name;
+            while (*ptr1 != '\0' && *ptr2 != '\0')
+            {
+                if (*ptr1 == *ptr2)
+                {
+                    ptr1++;
+                }
+                ptr2++;
+            }
+            if (*ptr1 == '\0')
+            {
+                LIST_INSERT_HEAD(&foundCommands , &commands[i]);
+                x=1;
+            }
+        }
+    }
+    if (x==1)
+    {
+        return CMD_MATCHED;
+    }
+    return CMD_INVALID;
 }
