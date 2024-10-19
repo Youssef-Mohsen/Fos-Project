@@ -46,8 +46,13 @@ void wakeup_one(struct Channel *chan)
 {
 	//TODO: [PROJECT'24.MS1 - #11] [4] LOCKS - wakeup_one
 	//COMMENT THE FOLLOWING LINE BEFORE START CODING
-	panic("wakeup_one is not implemented yet");
+//	panic("wakeup_one is not implemented yet");
 	//Your Code is Here...
+
+	struct Env* waked_up_process = dequeue(&chan->queue);
+	sched_insert_ready0(waked_up_process);
+//	cprintf("Process ID: %d is waked up\n", waked_up_process->env_id);
+//	cprintf("Its status is: %s\n", waked_up_process->env_status);
 }
 
 //====================================================
