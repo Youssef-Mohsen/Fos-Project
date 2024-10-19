@@ -67,8 +67,12 @@ void wakeup_all(struct Channel *chan)
 {
 	//TODO: [PROJECT'24.MS1 - #12] [4] LOCKS - wakeup_all
 	//COMMENT THE FOLLOWING LINE BEFORE START CODING
-	panic("wakeup_all is not implemented yet");
+//	panic("wakeup_all is not implemented yet");
 	//Your Code is Here...
-
+//	cprintf("The Blocked queue size = %d", queue_size(&chan->queue));
+	while(queue_size(&chan->queue)){
+		wakeup_one(chan);
+	}
+//	cprintf("The Blocked queue size = %d", queue_size(&chan->queue));
 }
 
