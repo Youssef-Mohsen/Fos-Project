@@ -20,7 +20,7 @@ void init_sleeplock(struct sleeplock *lk, char *name)
 	lk->locked = 0;
 	lk->pid = 0;
 }
-int holding_sleeplock(struct sleeplock *lk)
+int holding_sleeplock(struct sleeplock *lk) // is the sleeplock holded by this process or not
 {
 	int r;
 	acquire_spinlock(&(lk->lk));
