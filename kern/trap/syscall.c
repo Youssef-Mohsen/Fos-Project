@@ -524,7 +524,6 @@ uint32 syscall(uint32 syscallno, uint32 a1, uint32 a2, uint32 a3, uint32 a4, uin
 	{
 	//TODO: [PROJECT'24.MS1 - #02] [2] SYSTEM CALLS - Add suitable code here
 	case SYS_sbrk:
-
 		return (uint32)sys_sbrk(a1);
 		break;
 	case SYS_free_user_mem:
