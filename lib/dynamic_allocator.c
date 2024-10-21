@@ -108,7 +108,7 @@ void initialize_dynamic_allocator(uint32 daStart, uint32 initSizeOfAllocatedSpac
 		//panic("initialize_dynamic_allocator is not implemented yet");
 
     // Check for bounds
-    if ((daStart + initSizeOfAllocatedSpace) - 2*sizeof(struct Block_Start_End) > KERNEL_HEAP_MAX)
+    if ((daStart + initSizeOfAllocatedSpace) > KERNEL_HEAP_MAX)
         return;
     if(daStart < KERNEL_HEAP_START)
         return;
