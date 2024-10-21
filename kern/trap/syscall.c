@@ -318,7 +318,7 @@ void check_Param(uint32 virtual_address)
 	{
 		env_exit();
 	}
-	else if(virtual_address < USER_HEAP_START && virtual_address > USER_HEAP_MAX)
+	else if(virtual_address < USER_HEAP_MAX && virtual_address > USER_HEAP_START)
 	{
 		env_exit();
 	}
