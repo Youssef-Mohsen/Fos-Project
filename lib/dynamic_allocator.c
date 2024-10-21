@@ -144,8 +144,42 @@ void *alloc_block_FF(uint32 size)
 
 	//TODO: [PROJECT'24.MS1 - #06] [3] DYNAMIC ALLOCATOR - alloc_block_FF
 	//COMMENT THE FOLLOWING LINE BEFORE START CODING
-	panic("alloc_block_FF is not implemented yet");
+//	panic("alloc_block_FF is not implemented yet");
 	//Your Code is Here...
+	 if (size == 0) {
+	        return NULL;
+	    }
+
+	    struct BlockElement *blk;
+	    LIST_FOREACH(blk, &freeBlocksList) {
+	        void *va = (void *)blk;
+	        uint32 blk_size = get_block_size(va);
+
+	        if (is_free_block(va) && blk_size >= size + 2 * sizeof(uint32)) {
+
+	            if (blk_size >= size + DYN_ALLOC_MIN_BLOCK_SIZE + 2 * sizeof(uint32)) {
+
+	                uint32 remaining_size = blk_size - size - 2 * sizeof(uint32);
+	                void *new_block_va = (void *)((uint32)va + size + 2 * sizeof(uint32));
+	                set_block_data(new_block_va, remaining_size, 0);
+	                set_block_data(va, size + 2 * sizeof(uint32), 1);
+	            } else {
+	                set_block_data(va, blk_size, 1);
+	            }
+	            return (void *)((uint32 *)va + 1);
+	        }
+	    }
+
+	    uint32 required_size = size + 2 * sizeof(uint32);
+	    void *new_mem = sbrk(ROUNDUP(required_size, PAGE_SIZE) / PAGE_SIZE);
+	    if (new_mem == (void *)-1) {
+	        return NULL;
+	    }
+
+	    set_block_data(new_mem, required_size, 1);
+	    return (void *)((uint32 *)new_mem + 1);
+
+
 
 }
 //=========================================

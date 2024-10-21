@@ -39,11 +39,11 @@ void acquire_sleeplock(struct sleeplock *lk)
 	    while (lk->locked == 1) {
 	    	enqueue(&(lk->chan.queue),get_cpu_proc());
 	        sleep(&lk->chan, &(lk->lk));
-	        //acquire_spinlock(&(lk->lk));
+
 	    }
 
 	    lk->locked = 1;
-//	    lk->pid = get_cpu_proc()->env_id;
+
 	    release_spinlock(&(lk->lk));
 
 }
