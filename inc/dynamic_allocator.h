@@ -27,10 +27,18 @@ enum
 
 //=============================================================================
 //TODO: [PROJECT'24.MS1 - #00 GIVENS] [3] DYNAMIC ALLOCATOR - data structures
+struct Block_Start_End
+{
+    uint32 info;
+};// attribute((packed))
+
 struct BlockElement
 {
-	LIST_ENTRY(BlockElement) prev_next_info;	/* linked list links */
-};// __attribute__((packed))
+    struct Block_Start_End* header;
+    struct Block_Start_End* footer;
+    LIST_ENTRY(BlockElement) prev_next_info;    /* linked list links */
+
+};// attribute((packed))
 
 LIST_HEAD(MemBlock_LIST, BlockElement);
 struct MemBlock_LIST freeBlocksList ;

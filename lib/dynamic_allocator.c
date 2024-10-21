@@ -112,12 +112,42 @@ void initialize_dynamic_allocator(uint32 daStart, uint32 initSizeOfAllocatedSpac
 //==================================
 void set_block_data(void* va, uint32 totalSize, bool isAllocated)
 {
-	//TODO: [PROJECT'24.MS1 - #05] [3] DYNAMIC ALLOCATOR - set_block_data
-	//COMMENT THE FOLLOWING LINE BEFORE START CODING
-	panic("set_block_data is not implemented yet");
-	//Your Code is Here...
-}
+   //TODO: [PROJECT'24.MS1 - #05] [3] DYNAMIC ALLOCATOR - set_block_data
+   //COMMENT THE FOLLOWING LINE BEFORE START CODING
+   //panic("set_block_data is not implemented yet");
+   //Your Code is Here...
 
+   // total size not including header and footer
+   //check bounds
+   // makes sure least significant bit is zero
+   if (totalSize % 2 != 0) totalSize ++;
+   if (totalSize < 16) return;
+
+   struct BlockElement block = (struct BlockElement)(va);
+   block->header = (struct Block_Start_End )(va - sizeof(struct Block_Start_End));
+   block->footer = (struct Block_Start_End)(va + totalSize - sizeof(struct Block_Start_End));
+   if(isAllocated)
+   {
+       totalSize++;
+   }
+   else
+   {
+       LIST_INSERT_TAIL(&freeBlocksList, block);
+       block->prev_next_info.le_prev = LIST_PREV(block);
+   }
+   block->header->info = totalSize;
+   block->footer->info = totalSize;
+
+   struct BlockElement * element = NULL;
+   LIST_FOREACH(element, &freeBlocksList)
+   {
+     element->prev_next_info.le_next = LIST_NEXT(element);
+   }
+
+   // tests
+   cprintf("block size in Hex: %x \n", get_block_size(block));
+   cprintf("block is Free : %d \n", is_free_block(block));
+}
 
 //=========================================
 // [3] ALLOCATE BLOCK BY FIRST FIT:
@@ -157,16 +187,16 @@ void *alloc_block_FF(uint32 size)
 
 	        if (is_free_block(va) && blk_size >= size + 2 * sizeof(uint32)) {
 
-	            if (blk_size >= size + DYN_ALLOC_MIN_BLOCK_SIZE + 2 * sizeof(uint32)) {
+	            if (blk_size >= size + DYN_ALLOC_MIN_BLOCK_SIZE + 4 * sizeof(uint32)) {
 
 	                uint32 remaining_size = blk_size - size - 2 * sizeof(uint32);
 	                void *new_block_va = (void *)((uint32)va + size + 2 * sizeof(uint32));
-	                set_block_data(new_block_va, remaining_size, 0);
 	                set_block_data(va, size + 2 * sizeof(uint32), 1);
+	                set_block_data(new_block_va, remaining_size, 0);
 	            } else {
 	                set_block_data(va, blk_size, 1);
 	            }
-	            return (void *)((uint32 *)va + 1);
+	            return (void *)((uint32 *)va );
 	        }
 	    }
 
@@ -177,7 +207,7 @@ void *alloc_block_FF(uint32 size)
 	    }
 
 	    set_block_data(new_mem, required_size, 1);
-	    return (void *)((uint32 *)new_mem + 1);
+	    return (void *)((uint32 *)new_mem );
 
 
 
