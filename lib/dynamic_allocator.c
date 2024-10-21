@@ -87,26 +87,72 @@ bool is_initialized = 0;
 //==================================
 // [1] INITIALIZE DYNAMIC ALLOCATOR:
 //==================================
+
+// Youssef Mohsen
 void initialize_dynamic_allocator(uint32 daStart, uint32 initSizeOfAllocatedSpace)
 {
 	//==================================================================================
-	//DON'T CHANGE THESE LINES==========================================================
-	//==================================================================================
-	{
-		if (initSizeOfAllocatedSpace % 2 != 0) initSizeOfAllocatedSpace++; //ensure it's multiple of 2
-		if (initSizeOfAllocatedSpace == 0)
-			return ;
-		is_initialized = 1;
-	}
-	//==================================================================================
-	//==================================================================================
+		//DON'T CHANGE THESE LINES==========================================================
+		//==================================================================================
+		{
+			if (initSizeOfAllocatedSpace % 2 != 0) initSizeOfAllocatedSpace++; //ensure it's multiple of 2
+			if (initSizeOfAllocatedSpace == 0)
+				return ;
+			is_initialized = 1;
+		}
+		//==================================================================================
+		//==================================================================================
 
-	//TODO: [PROJECT'24.MS1 - #04] [3] DYNAMIC ALLOCATOR - initialize_dynamic_allocator
-	//COMMENT THE FOLLOWING LINE BEFORE START CODING
-	panic("initialize_dynamic_allocator is not implemented yet");
-	//Your Code is Here...
+		//TODO: [PROJECT'24.MS1 - #04] [3] DYNAMIC ALLOCATOR - initialize_dynamic_allocator
+		//COMMENT THE FOLLOWING LINE BEFORE START CODING
+		//panic("initialize_dynamic_allocator is not implemented yet");
 
+    // Check for bounds
+    if ((daStart + initSizeOfAllocatedSpace) - 2*sizeof(struct Block_Start_End) > KERNEL_HEAP_MAX)
+        return;
+    if(daStart < KERNEL_HEAP_START)
+        return;
+
+    // Create the BEG Block
+    struct Block_Start_End* beg_block = (struct Block_Start_End*) daStart;
+    beg_block->info = 1;
+
+    // Create the END Block
+    struct Block_Start_End* end_block = (struct Block_Start_End*) (daStart + initSizeOfAllocatedSpace - sizeof(struct Block_Start_End));
+    end_block->info = 1;
+
+    // Create the first free block
+    struct BlockElement* first_free_block = (struct BlockElement*)(daStart+ 2*sizeof(struct Block_Start_End));
+
+    first_free_block->header = (struct Block_Start_End*) (daStart+sizeof(struct Block_Start_End));
+    first_free_block->footer = (struct Block_Start_End*) (daStart + initSizeOfAllocatedSpace - 2*sizeof(struct Block_Start_End));
+
+    // Create Header
+    first_free_block->header->info = initSizeOfAllocatedSpace - 2 * sizeof(struct Block_Start_End); // Adjust size
+
+    // Create Footer
+    first_free_block->footer->info = initSizeOfAllocatedSpace - 2 * sizeof(struct Block_Start_End);// Match footer info to header
+
+    // Initialize links to the END block
+   first_free_block->prev_next_info.le_next = NULL; // Link to the END block
+   first_free_block->prev_next_info.le_prev = NULL;
+
+    // Link the first free block into the free block list
+    LIST_INSERT_HEAD(&freeBlocksList , first_free_block);
+
+    print_blocks_list(freeBlocksList);
+    cprintf("Da Start : %x\n",daStart);
+    cprintf("Init Alloc : %x\n",initSizeOfAllocatedSpace);
+    cprintf("Beg Block : %x \n",beg_block);
+    cprintf("End Block : %x\n",end_block);
+    cprintf("Address : %x\n",first_free_block);
+    cprintf("Address H : %x\n",first_free_block->header);
+    cprintf("Address F : %x\n",first_free_block->footer);
+    cprintf("Size List : %d\n",freeBlocksList.size);
+    cprintf("First Element List : %x\n",freeBlocksList.lh_first);
 }
+
+
 //==================================
 // [2] SET BLOCK HEADER & FOOTER:
 //==================================
