@@ -8,7 +8,9 @@
 #include <inc/string.h>
 #include "../inc/dynamic_allocator.h"
 
-
+/*header/footer FOR BLOCKS ONLY (NOT THE HEAP'S ONES)*/
+#define HEADER(va) (uint32 *)((char *)va - 4)
+#define FOOTER(va, totalSize) (uint32 *)((char *)va + totalSize - 8)
 //==================================================================================//
 //============================== GIVEN FUNCTIONS ===================================//
 //==================================================================================//
@@ -91,27 +93,28 @@ bool is_initialized = 0;
 // Youssef Mohsen
 void initialize_dynamic_allocator(uint32 daStart, uint32 initSizeOfAllocatedSpace)
 {
-	//==================================================================================
-		//DON'T CHANGE THESE LINES==========================================================
-		//==================================================================================
-		{
-			if (initSizeOfAllocatedSpace % 2 != 0) initSizeOfAllocatedSpace++; //ensure it's multiple of 2
-			if (initSizeOfAllocatedSpace == 0)
-				return ;
-			is_initialized = 1;
-		}
-		//==================================================================================
-		//==================================================================================
+        //==================================================================================
+        //DON'T CHANGE THESE LINES==========================================================
+        //==================================================================================
+        {
+            if (initSizeOfAllocatedSpace % 2 != 0) initSizeOfAllocatedSpace++; //ensure it's multiple of 2
+            if (initSizeOfAllocatedSpace == 0)
+                return ;
+            is_initialized = 1;
+        }
+        //==================================================================================
+        //==================================================================================
 
-		//TODO: [PROJECT'24.MS1 - #04] [3] DYNAMIC ALLOCATOR - initialize_dynamic_allocator
-		//COMMENT THE FOLLOWING LINE BEFORE START CODING
-		//panic("initialize_dynamic_allocator is not implemented yet");
+        //TODO: [PROJECT'24.MS1 - #04] [3] DYNAMIC ALLOCATOR - initialize_dynamic_allocator
+        //COMMENT THE FOLLOWING LINE BEFORE START CODING
+        //panic("initialize_dynamic_allocator is not implemented yet");
 
     // Check for bounds
     if ((daStart + initSizeOfAllocatedSpace) > KERNEL_HEAP_MAX)
         return;
     if(daStart < KERNEL_HEAP_START)
         return;
+
 
     // Create the BEG Block
     struct Block_Start_End* beg_block = (struct Block_Start_End*) daStart;
@@ -122,16 +125,12 @@ void initialize_dynamic_allocator(uint32 daStart, uint32 initSizeOfAllocatedSpac
     end_block->info = 1;
 
     // Create the first free block
-    struct BlockElement* first_free_block = (struct BlockElement*)(daStart+ 2*sizeof(struct Block_Start_End));
+    struct BlockElement* first_free_block = (struct BlockElement*)(daStart + 2*sizeof(struct Block_Start_End));
 
-    first_free_block->header = (struct Block_Start_End*) (daStart+sizeof(struct Block_Start_End));
-    first_free_block->footer = (struct Block_Start_End*) (daStart + initSizeOfAllocatedSpace - 2*sizeof(struct Block_Start_End));
 
-    // Create Header
-    first_free_block->header->info = initSizeOfAllocatedSpace - 2 * sizeof(struct Block_Start_End); // Adjust size
-
-    // Create Footer
-    first_free_block->footer->info = initSizeOfAllocatedSpace - 2 * sizeof(struct Block_Start_End);// Match footer info to header
+    //Assigning the Heap's Header/Footer values
+    *(uint32*)((char*)daStart + 4 /*4 Byte*/) = initSizeOfAllocatedSpace - 2 * sizeof(struct Block_Start_End) /*Heap's header/footer*/;
+    *(uint32*)((char*)daStart + initSizeOfAllocatedSpace - 8) = initSizeOfAllocatedSpace - 2 * sizeof(struct Block_Start_End) /*Heap's header/footer*/;
 
     // Initialize links to the END block
    first_free_block->prev_next_info.le_next = NULL; // Link to the END block
@@ -139,17 +138,6 @@ void initialize_dynamic_allocator(uint32 daStart, uint32 initSizeOfAllocatedSpac
 
     // Link the first free block into the free block list
     LIST_INSERT_HEAD(&freeBlocksList , first_free_block);
-
-    print_blocks_list(freeBlocksList);
-    cprintf("Da Start : %x\n",daStart);
-    cprintf("Init Alloc : %x\n",initSizeOfAllocatedSpace);
-    cprintf("Beg Block : %x \n",beg_block);
-    cprintf("End Block : %x\n",end_block);
-    cprintf("Address : %x\n",first_free_block);
-    cprintf("Address H : %x\n",first_free_block->header);
-    cprintf("Address F : %x\n",first_free_block->footer);
-    cprintf("Size List : %d\n",freeBlocksList.size);
-    cprintf("First Element List : %x\n",freeBlocksList.lh_first);
 }
 
 
@@ -158,12 +146,34 @@ void initialize_dynamic_allocator(uint32 daStart, uint32 initSizeOfAllocatedSpac
 //==================================
 void set_block_data(void* va, uint32 totalSize, bool isAllocated)
 {
-	//TODO: [PROJECT'24.MS1 - #05] [3] DYNAMIC ALLOCATOR - set_block_data
-	//COMMENT THE FOLLOWING LINE BEFORE START CODING
-	panic("set_block_data is not implemented yet");
-	//Your Code is Here...
-}
+   //TODO: [PROJECT'24.MS1 - #05] [3] DYNAMIC ALLOCATOR - set_block_data
+   //COMMENT THE FOLLOWING LINE BEFORE START CODING
+   //panic("set_block_data is not implemented yet");
+   //Your Code is Here...
 
+
+   /*struct BlockElement *block = (struct BlockElement *)(va);
+   block->header = (struct Block_Start_End *)(va - sizeof(struct Block_Start_End));
+   block->footer = (struct Block_Start_End *)(va + totalSize - 2*sizeof(struct Block_Start_End));*/
+   if(isAllocated)
+   {
+	   //if already allocated and he wants it to be allocated
+	   if(~(totalSize&1)) goto sayed;
+
+	   /*block->header->info = totalSize;
+	   block->footer->info = totalSize;*/
+
+	   //Allocated flag = TRUE
+	   totalSize++;
+
+   }
+
+   //Assigning size to Header/Footer
+   sayed:
+   *HEADER(va) = totalSize;
+   *FOOTER(va, totalSize) = totalSize;
+
+}
 
 //=========================================
 // [3] ALLOCATE BLOCK BY FIRST FIT:
@@ -183,6 +193,7 @@ void *alloc_block_FF(uint32 size)
 			uint32 da_start = (uint32)sbrk(ROUNDUP(required_size, PAGE_SIZE)/PAGE_SIZE);
 			uint32 da_break = (uint32)sbrk(0);
 			initialize_dynamic_allocator(da_start, da_break - da_start);
+			cprintf("Initialized \n");
 		}
 	}
 	//==================================================================================
@@ -190,8 +201,99 @@ void *alloc_block_FF(uint32 size)
 
 	//TODO: [PROJECT'24.MS1 - #06] [3] DYNAMIC ALLOCATOR - alloc_block_FF
 	//COMMENT THE FOLLOWING LINE BEFORE START CODING
-	panic("alloc_block_FF is not implemented yet");
+//	panic("alloc_block_FF is not implemented yet");
 	//Your Code is Here...
+	 if (size == 0) {
+	        return NULL;
+	    }
+
+	    struct BlockElement *blk = NULL;
+	    LIST_FOREACH(blk, &freeBlocksList) {
+	        void *va = (void *)blk;
+	        uint32 blk_size = get_block_size(va);
+	        if(size == 4088)
+	        {
+	        	cprintf("Block Size : %d ,Size : %d \n",blk_size,size);
+	        }
+	        if (blk_size >= size + 2 * sizeof(uint32)) {
+	        	cprintf("error4040 \n");
+	            if (blk_size >= size + DYN_ALLOC_MIN_BLOCK_SIZE + 4 * sizeof(uint32)) {
+	            	cprintf("error4041 \n");
+	                uint32 remaining_size = blk_size - size - 2 * sizeof(uint32);
+	                void *new_block_va = (void *)((char *)va + size + 2 * sizeof(uint32)); // casting to char because its 1 byte size
+	                if (LIST_PREV(blk)==NULL&&LIST_NEXT(blk)==NULL)
+	                {
+	                	cprintf("t = %d \n",1);
+	                	LIST_FIRST(&freeBlocksList) =(struct BlockElement*)new_block_va;
+	                	LIST_LAST(&freeBlocksList) =(struct BlockElement*)new_block_va;
+	                }
+	                else if (LIST_PREV(blk)==NULL)
+	                {
+	                	cprintf("t = %d \n",2);
+	                	LIST_REMOVE(&freeBlocksList,blk);
+	                	LIST_INSERT_HEAD(&freeBlocksList,(struct BlockElement*)new_block_va);
+	                	cprintf("t = %d \n",10);
+	                }
+	                else if (LIST_NEXT(blk)==NULL)
+	                {
+	                	cprintf("t = %d \n",3);
+	                	LIST_REMOVE(&freeBlocksList,blk);
+	                	LIST_INSERT_TAIL(&freeBlocksList,(struct BlockElement*)new_block_va);
+	                }
+	                else
+	                {
+	                	cprintf("t = %d \n",4);
+	                	// Refactoring the next block's previous pointer
+						//void* temp = LIST_PREV(blk);
+						//LIST_REMOVE(&freeBlocksList,blk);
+						//LIST_INSERT_AFTER(&freeBlocksList,temp,);
+						LIST_PREV(LIST_NEXT(blk)) = new_block_va;
+						//LIST_NEXT(blk)->prev_next_info.le_prev = new_block_va;
+						cprintf("va = %d \n",2);
+						// Refactoring the previous block's next pointer
+						LIST_NEXT(LIST_PREV(blk)) = new_block_va;
+						cprintf("va = %d \n",3);
+						//((struct BlockElement *) va)->prev_next_info->le_next
+						//if(size == 20) cprintf("1\n");
+						cprintf("va = %d \n",va);
+						set_block_data(va, size + 2 * sizeof(uint32), 1);
+
+						cprintf("Allocated Block\n");
+						set_block_data(new_block_va, remaining_size, 0);
+						cprintf("NotAllocated Block \n");
+	                }
+
+	            } else {
+	            	cprintf("error4042 \n");
+	            	// Refactoring the next block's previous pointer
+	            	LIST_PREV(LIST_NEXT(blk)) = LIST_PREV(blk);
+
+	            	// Refactoring the previous block's next pointer
+	            	LIST_NEXT(LIST_PREV(blk)) = LIST_NEXT(blk);
+
+	                set_block_data(va, blk_size, 1);
+	                cprintf("suii1 \n");
+	            }
+	            efrag:
+	            cprintf("suii2 \n");
+	            cprintf("failed1 \n");
+	            return va;
+
+	        }
+	    }
+
+	    uint32 required_size = size + 2 * sizeof(uint32);
+	    void *new_mem = sbrk(ROUNDUP(required_size, PAGE_SIZE) / PAGE_SIZE);
+	    if (new_mem == (void *)-1) {
+	        return NULL;
+	    }
+	    //cprintf("New Mem: %x \n",new_mem);
+	    //cprintf("failed2 \n");
+	    set_block_data(new_mem, required_size, 1);
+	    //cprintf("success1 \n");
+	    return new_mem;
+
+
 
 }
 //=========================================
