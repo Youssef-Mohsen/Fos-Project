@@ -169,18 +169,18 @@ void free_block(void *va)
 	//COMMENT THE FOLLOWING LINE BEFORE START CODING
 	//panic("free_block is not implemented yet");
 	//Your Code is Here...
-	bool prev_is_free, next_is_free;
+	bool prev_is_free = 0, next_is_free = 0;
 	struct BlockElement *it;
 	LIST_FOREACH (it, &freeBlocksList){
-		if((uint32 *)it->prev_next_info.le_next > (uint32 *)va || it == LIST_LAST(&freeBlocksList)){
+		if( ((char *)it < (char *)va && (char *)it->prev_next_info.le_next > (char *)va) || it == LIST_LAST(&freeBlocksList)){
 			//get the address of prev and next
 			void *next_block = it->prev_next_info.le_next;
-			void *prev_block = LIST_NEXT(it)->prev_next_info.le_prev;
-			if((uint32 *)prev_block + get_block_size(prev_block) == (uint32 *)va){
-				prev_is_free = 1;
+			void *prev_block = it;
+			if ((char *)prev_block + get_block_size(prev_block) == (char *)va) {
+			    prev_is_free = 1;
 			}
-			if((uint32 *)va + get_block_size(va) == (uint32 *)next_block){
-				next_is_free = 1;
+			if ((char *)va + get_block_size(va) == (char *)next_block) {
+			    next_is_free = 1;
 			}
 
 			if(prev_is_free && next_is_free)
@@ -205,24 +205,38 @@ void free_block(void *va)
 			else if(next_is_free)
 			{
 				//merge - right side
-				void *new_next_address = va;
-				it->prev_next_info.le_next = new_next_address;
+				it->prev_next_info.le_next = va;
 
 				uint32 new_block_size = get_block_size(va) + get_block_size(next_block);
 				set_block_data(va, new_block_size, 0);
 
 				LIST_NEXT( LIST_NEXT(it) )->prev_next_info.le_prev = va;
+
+				struct BlockElement *va_block = (struct BlockElement *)va;
+				va_block->prev_next_info.le_next = LIST_NEXT(it)->prev_next_info.le_next;
+				va_block->prev_next_info.le_prev = prev_block;
+
+				LIST_NEXT(it) = va_block;
 			}
 			else
 			{
 				it->prev_next_info.le_next = va;
 				LIST_NEXT(it)->prev_next_info.le_prev = va;
 
-				struct BlockElement new_block = {{next_block, prev_block}};
-				struct BlockElement *curr = &new_block;
-				LIST_INSERT_AFTER(&freeBlocksList, it, curr);
+				struct BlockElement *va_block = (struct BlockElement *)va;
+				va_block->prev_next_info.le_next = next_block;
+				va_block->prev_next_info.le_prev = prev_block;
+
+				//check if the block should be inserted at the BEGINNING of the list
+				if(it == LIST_LAST(&freeBlocksList) && (char *)it > (char *)va){
+					LIST_INSERT_HEAD(&freeBlocksList, va_block);
+				}
+				else{
+					LIST_INSERT_AFTER(&freeBlocksList, it, va_block);
+				}
 				set_block_data(va, get_block_size(va), 0);
 			}
+			return;
 		}
 	}
 }
