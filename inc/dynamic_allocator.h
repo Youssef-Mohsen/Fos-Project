@@ -36,8 +36,6 @@ struct Block_Start_End
 
 struct BlockElement
 {
-	struct Block_Start_End* header;
-	struct Block_Start_End* footer;
 	LIST_ENTRY(BlockElement) prev_next_info;	/* linked list links */
 
 };// __attribute__((packed))
