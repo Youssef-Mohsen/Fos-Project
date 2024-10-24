@@ -150,6 +150,12 @@ void initialize_dynamic_allocator(uint32 daStart, uint32 initSizeOfAllocatedSpac
     cprintf("Address F : %x\n",first_free_block->footer);
     cprintf("Size List : %d\n",freeBlocksList.size);
     cprintf("First Element List : %x\n",freeBlocksList.lh_first);
+
+	//==================================
+	//		TESTING set_block_data
+	//==================================
+	set_block_data(daStart, initSizeOfAllocatedSpace, 1);
+	cprintf("block size a7a: %x \n", daStart);
 }
 
 
@@ -160,8 +166,34 @@ void set_block_data(void* va, uint32 totalSize, bool isAllocated)
 {
 	//TODO: [PROJECT'24.MS1 - #05] [3] DYNAMIC ALLOCATOR - set_block_data
 	//COMMENT THE FOLLOWING LINE BEFORE START CODING
-	panic("set_block_data is not implemented yet");
+	//panic("set_block_data is not implemented yet");
 	//Your Code is Here...
+
+	// total size including header and footer
+	//totalSize += 8;
+
+	// makes sure least significant bit is zero
+	if (totalSize % 2 != 0) totalSize ++;
+
+	struct BlockElement *blockElement = (struct BlockElement *)(va);
+	blockElement->header = (struct Block_Start_End *)(va - 4);
+	blockElement->footer = (struct Block_Start_End *)(va + totalSize - 4);
+
+	if(isAllocated)
+	{
+		// if allocated, assign 1 to least significant bit
+		totalSize ++;
+		blockElement->header->info = totalSize;
+		blockElement->footer->info = totalSize;
+	}
+	else
+	{
+		// if not allocated, keep least significant bit as 0
+		blockElement->header->info = totalSize;
+		blockElement->footer->info = totalSize;
+	}
+
+	// tests 
 }
 
 
