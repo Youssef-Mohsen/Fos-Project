@@ -151,15 +151,7 @@ void set_block_data(void* va, uint32 totalSize, bool isAllocated)
    //panic("set_block_data is not implemented yet");
    //Your Code is Here...
 
-
-   /*struct BlockElement *block = (struct BlockElement *)(va);
-   block->header = (struct Block_Start_End *)(va - sizeof(struct Block_Start_End));
-   block->footer = (struct Block_Start_End *)(va + totalSize - 2*sizeof(struct Block_Start_End));*/
-
 	totalSize = totalSize|isAllocated;
-
-   //Assigning size to Header/Footer
-
    *HEADER(va) = totalSize;
    *FOOTER(va) = totalSize;
 }
@@ -203,22 +195,16 @@ void *alloc_block_FF(uint32 size)
 	    LIST_FOREACH(blk, &freeBlocksList) {
 	        void *va = (void *)blk;
 	        uint32 blk_size = get_block_size(va);
-	        if(size == 265712)
-	        	    {
-	        	    	cprintf("Bloc Size : %d \n Size : %d\n",blk_size,size);
-	        	    }
 	        if (blk_size >= size + 2 * sizeof(uint32)) {
-	            if (blk_size >= size + DYN_ALLOC_MIN_BLOCK_SIZE + 4 * sizeof(uint32)) {
+	            if (blk_size >= size + DYN_ALLOC_MIN_BLOCK_SIZE + 4 * sizeof(uint32))
+	            {
 	                uint32 remaining_size = blk_size - size - 2 * sizeof(uint32);
 	                void *new_block_va = (void *)((char *)va + size + 2 * sizeof(uint32)); // casting to char because its 1 byte size
 	                set_block_data(va, size + 2 * sizeof(uint32), 1);
-
 	                if (LIST_PREV(blk)==NULL&&LIST_NEXT(blk)==NULL)
 	                {
-
 	                	LIST_FIRST(&freeBlocksList) =(struct BlockElement*)new_block_va;
 	                	set_block_data(new_block_va, remaining_size, 0);
-
 	                }
 	                else if (LIST_PREV(blk)==NULL)
 	                {
@@ -227,59 +213,40 @@ void *alloc_block_FF(uint32 size)
 	                }
 	                else if (LIST_NEXT(blk)==NULL)
 	                {
-
 	                	LIST_LAST(&freeBlocksList) =(struct BlockElement*)new_block_va;
 	                	set_block_data(new_block_va, remaining_size, 0);
 	                }
 	                else
 	                {
-
 						LIST_PREV(LIST_NEXT(blk)) = new_block_va;
-
 						LIST_NEXT(LIST_PREV(blk)) = new_block_va;
-
 						set_block_data(new_block_va, remaining_size, 0);
-
 	                }
-
-	            } else {
+	            }
+	            else
+	            {
 
 	            	if (LIST_PREV(blk)==NULL&&LIST_NEXT(blk)==NULL)
 					{
-
 						LIST_FIRST(&freeBlocksList) =(struct BlockElement*)va;
-
 					}
 					else if (LIST_PREV(blk)==NULL)
 					{
 						LIST_FIRST(&freeBlocksList) =(struct BlockElement*)va;
-
 					}
 					else if (LIST_NEXT(blk)==NULL)
 					{
-
 						LIST_LAST(&freeBlocksList) =(struct BlockElement*)va;
-
 					}
 					else
 					{
-
 						LIST_PREV(LIST_NEXT(blk)) = va;
-
 						LIST_NEXT(LIST_PREV(blk)) = va;
-
-
-
 					}
-
-
 	            	set_block_data(va, blk_size, 1);
 	            	LIST_REMOVE(&freeBlocksList,blk);
-
 	            }
-
 	            return va;
-
 	        }
 	    }
 	    cprintf("sbrk\n");
@@ -288,13 +255,8 @@ void *alloc_block_FF(uint32 size)
 	    if (new_mem == (void *)-1) {
 	        return NULL;
 	    }
-
 	    set_block_data(new_mem, required_size, 1);
-
 	    return new_mem;
-
-
-
 }
 //=========================================
 // [4] ALLOCATE BLOCK BY BEST FIT:
