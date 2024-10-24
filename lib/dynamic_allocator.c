@@ -159,7 +159,88 @@ void *alloc_block_BF(uint32 size)
 	//Your Code is Here...
 
 }
+void merging(struct BlockElement *prev_block, struct BlockElement *next_block, void* va){
+//	cprintf("273\n");
+	bool prev_is_free = 0, next_is_free = 0;
+//	cprintf("%x\n", (char *)prev_block);
+//	cprintf("%x\n", get_block_size(prev_block));
+//	cprintf("%x\n", (char *)va);
+//	cprintf("%x\n", (char *)prev_block + get_block_size(prev_block));
+	if (prev_block != NULL && (char *)prev_block + get_block_size(prev_block) == (char *)va) {
+//		cprintf("276\n");
+		prev_is_free = 1;
+	}
+	if (next_block != NULL && (char *)va + get_block_size(va) == (char *)next_block) {
+		next_is_free = 1;
+	}
 
+
+	if(prev_is_free && next_is_free)
+	{
+//		cprintf("284\n");
+		//merge - 2 sides
+		prev_block->prev_next_info.le_next = next_block->prev_next_info.le_next;
+
+		LIST_NEXT( next_block )->prev_next_info.le_prev = prev_block;
+
+
+		uint32 new_block_size = get_block_size(prev_block) + get_block_size(va) + get_block_size(next_block);
+		set_block_data(prev_block, new_block_size, 0);
+
+
+		LIST_REMOVE(&freeBlocksList, next_block);
+	}
+	else if(prev_is_free)
+	{
+//		cprintf("299\n");
+		//merge - left side
+		uint32 new_block_size = get_block_size(prev_block) + get_block_size(va);
+		set_block_data(prev_block, new_block_size, 0);
+	}
+	else if(next_is_free)
+	{
+//		cprintf("306\n");
+		//merge - right side
+		if(prev_block != NULL) prev_block->prev_next_info.le_next = va;
+		LIST_NEXT( next_block )->prev_next_info.le_prev = va;
+
+		uint32 new_block_size = get_block_size(va) + get_block_size(next_block);
+		set_block_data(va, new_block_size, 0);
+
+
+		struct BlockElement *va_block = (struct BlockElement *)va;
+		va_block->prev_next_info.le_next = next_block->prev_next_info.le_next;
+		va_block->prev_next_info.le_prev = prev_block;
+
+		if(prev_block != NULL) LIST_NEXT(prev_block) = va_block;
+		else LIST_FIRST(&freeBlocksList) = va_block;
+	}
+	else
+	{
+//		cprintf("324\n");
+//		if(prev_block != NULL) prev_block->prev_next_info.le_next = va;
+//		if(next_block != NULL) next_block->prev_next_info.le_prev = va;
+
+		struct BlockElement *va_block = (struct BlockElement *)va;
+//		va_block->prev_next_info.le_next = next_block;
+//
+//		va_block->prev_next_info.le_prev = prev_block;
+
+		//check if the block should be inserted at the BEGINNING of the list
+		if(prev_block != NULL && next_block != NULL) LIST_INSERT_AFTER(&freeBlocksList, prev_block, va_block);
+		else if(prev_block != NULL) LIST_INSERT_TAIL(&freeBlocksList, va_block);
+		else {
+//			cprintf("342\n");
+			LIST_INSERT_HEAD(&freeBlocksList, va_block);
+		}
+
+//				cprintf("Before The header: %d\n", HEADER(va));
+//				cprintf("The footer: %d\n", FOOTER(va));
+		set_block_data(va, get_block_size(va), 0);
+//				cprintf("After The header: %d\n", HEADER(va));
+//				cprintf("The footer: %d\n", FOOTER(va));
+	}
+}
 //===================================================
 // [5] FREE BLOCK WITH COALESCING:
 //===================================================
@@ -169,77 +250,36 @@ void free_block(void *va)
 	//COMMENT THE FOLLOWING LINE BEFORE START CODING
 	//panic("free_block is not implemented yet");
 	//Your Code is Here...
-	bool prev_is_free = 0, next_is_free = 0;
-	struct BlockElement *it;
-	LIST_FOREACH (it, &freeBlocksList){
-		if( ((char *)it < (char *)va && (char *)it->prev_next_info.le_next > (char *)va) || it == LIST_LAST(&freeBlocksList)){
+	struct BlockElement *prev_block = LIST_FIRST(&freeBlocksList);
+//	cprintf("The va:%x\n", va);
+//	if(LIST_SIZE(&freeBlocksList) > 7) while(prev_block != NULL){
+//		cprintf("BLOCk: %x\n", prev_block);
+//		prev_block = LIST_NEXT(prev_block);
+//	}
+//	cprintf("SIZE:, %d\n", LIST_SIZE(&freeBlocksList));
+//	cprintf("the addresss of va: %x\n", (char *)va);
+
+
+	if((char *)LIST_LAST(&freeBlocksList) < (char *)va){
+//		cprintf("363\n");
+		merging(LIST_LAST(&freeBlocksList), NULL, va);
+	}
+	else if((char *)LIST_FIRST(&freeBlocksList) > (char *)va) {
+//		cprintf("367\n");
+		merging(NULL, LIST_FIRST(&freeBlocksList),va);
+	}
+	else LIST_FOREACH (prev_block, &freeBlocksList){
+		if((uint32 *)prev_block < (uint32 *)va && (uint32 *)prev_block->prev_next_info.le_next > (uint32 *)va ){
+//			cprintf("376\n");
 			//get the address of prev and next
-			void *next_block = it->prev_next_info.le_next;
-			void *prev_block = it;
-			if ((char *)prev_block + get_block_size(prev_block) == (char *)va) {
-			    prev_is_free = 1;
-			}
-			if ((char *)va + get_block_size(va) == (char *)next_block) {
-			    next_is_free = 1;
-			}
-
-			if(prev_is_free && next_is_free)
-			{
-				//merge - 2 sides
-				void *new_next_address = LIST_NEXT(it)->prev_next_info.le_next;
-				it->prev_next_info.le_next = new_next_address;
-
-				uint32 new_block_size = get_block_size(prev_block) + get_block_size(va) + get_block_size(next_block);
-				set_block_data(prev_block, new_block_size, 0);
-
-				LIST_NEXT( LIST_NEXT(it) )->prev_next_info.le_prev = prev_block;
-
-				LIST_REMOVE(&freeBlocksList, LIST_NEXT(it));
-			}
-			else if(prev_is_free)
-			{
-				//merge - left side
-				uint32 new_block_size = get_block_size(prev_block) + get_block_size(va);
-				set_block_data(prev_block, new_block_size, 0);
-			}
-			else if(next_is_free)
-			{
-				//merge - right side
-				it->prev_next_info.le_next = va;
-
-				uint32 new_block_size = get_block_size(va) + get_block_size(next_block);
-				set_block_data(va, new_block_size, 0);
-
-				LIST_NEXT( LIST_NEXT(it) )->prev_next_info.le_prev = va;
-
-				struct BlockElement *va_block = (struct BlockElement *)va;
-				va_block->prev_next_info.le_next = LIST_NEXT(it)->prev_next_info.le_next;
-				va_block->prev_next_info.le_prev = prev_block;
-
-				LIST_NEXT(it) = va_block;
-			}
-			else
-			{
-				it->prev_next_info.le_next = va;
-				LIST_NEXT(it)->prev_next_info.le_prev = va;
-
-				struct BlockElement *va_block = (struct BlockElement *)va;
-				va_block->prev_next_info.le_next = next_block;
-				va_block->prev_next_info.le_prev = prev_block;
-
-				//check if the block should be inserted at the BEGINNING of the list
-				if(it == LIST_LAST(&freeBlocksList) && (char *)it > (char *)va){
-					LIST_INSERT_HEAD(&freeBlocksList, va_block);
-				}
-				else{
-					LIST_INSERT_AFTER(&freeBlocksList, it, va_block);
-				}
-				set_block_data(va, get_block_size(va), 0);
-			}
-			return;
+			struct BlockElement *next_block = LIST_NEXT(prev_block);
+			merging(prev_block, next_block, va);
+			break;
 		}
 	}
+
 }
+
 
 //=========================================
 // [6] REALLOCATE BLOCK BY FIRST FIT:
