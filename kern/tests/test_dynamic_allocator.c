@@ -142,7 +142,7 @@ int test_initial_alloc(int ALLOC_STRATEGY)
 		totalSizes += allocSizes[i] * allocCntPerSize ;
 	}
 	int remainSize = initAllocatedSpace - totalSizes - 2*sizeof(int) ; //exclude size of "DA Begin & End" blocks
-	//cprintf("\n********* Remaining size = %d\n", remainSize);
+	cprintf("\n********* Remaining size = %d\n", remainSize);
 	if (remainSize <= 0)
 	{
 		is_correct = 0;
@@ -155,16 +155,21 @@ int test_initial_alloc(int ALLOC_STRATEGY)
 	{
 		for (int j = 0; j < allocCntPerSize; ++j)
 		{
+			cprintf("j = %d \n", j);
 			actualSize = allocSizes[i] - sizeOfMetaData;
 			va = startVAs[idx] = alloc_block(actualSize, ALLOC_STRATEGY);
+			cprintf("162");
 			midVAs[idx] = va + actualSize/2 ;
 			endVAs[idx] = va + actualSize - sizeof(short);
 			//Check block
 			expectedVA = (curVA + sizeOfMetaData/2);
+			cprintf("167");
 			if (check_block(va, expectedVA, allocSizes[i], 1) == 0)
 			{
+				cprintf("170");
 				is_correct = 0;
 			}
+			cprintf("173");
 			curVA += allocSizes[i] ;
 			*(startVAs[idx]) = idx ;
 			*(midVAs[idx]) = idx ;
