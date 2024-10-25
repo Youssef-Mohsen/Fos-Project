@@ -30,9 +30,15 @@ void sleep(struct Channel *chan, struct spinlock* lk)
 {
 	//TODO: [PROJECT'24.MS1 - #10] [4] LOCKS - sleep
 	//COMMENT THE FOLLOWING LINE BEFORE START CODING
-	panic("sleep is not implemented yet");
+	//panic("sleep is not implemented yet");
 	//Your Code is Here...
 
+	acquire_spinlock(&ProcessQueues.qlock);
+	enqueue(&chan->queue,get_cpu_proc());
+	get_cpu_proc()->env_status = ENV_BLOCKED;
+	release_spinlock(lk);
+	sched();
+	acquire_spinlock(lk);
 }
 
 //==================================================

@@ -1,7 +1,7 @@
 00200010 R __STAB_BEGIN__
-00205638 R __STAB_END__
-00205639 R __STABSTR_BEGIN__
-00208799 R __STABSTR_END__
+00205680 R __STAB_END__
+00205681 R __STABSTR_BEGIN__
+00208847 R __STABSTR_END__
 00800020 T _start
 00800031 t args_exist
 00800038 T _main
@@ -112,10 +112,10 @@
 008021a8 T sys_allocate_chunk
 008021c5 T sys_utilities
 008021e3 T sys_sbrk
-00802200 T sys_free_user_mem
-0080221d T sys_allocate_user_mem
-0080223c T __udivdi3
-0080234c T __umoddi3
+008021fe T sys_free_user_mem
+0080221a T sys_allocate_user_mem
+00802238 T __udivdi3
+00802348 T __umoddi3
 00802900 r error_string
 00803000 D binaryname
 00803004 B ws_size_first
