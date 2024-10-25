@@ -9,8 +9,8 @@
 #include "../inc/dynamic_allocator.h"
 
 /*header/footer FOR BLOCKS ONLY (NOT THE HEAP'S ONES)*/
-#define HEADER(va) (uint32 *)((char *)va - 4)
-#define FOOTER(va, totalSize) (uint32 *)((char *)va + totalSize - 8)
+#define HEADER(va) (uint32*)((char*)va - 4)
+#define FOOTER(va) (uint32*)((*HEADER(va)) & !1 + va - 8)
 
 //==================================================================================//
 //============================== GIVEN FUNCTIONS ===================================//
@@ -213,32 +213,21 @@ void *alloc_block_FF(uint32 size)
 	    LIST_FOREACH(blk, &freeBlocksList) {
 	        void *va = (void *)blk;
 	        uint32 blk_size = get_block_size(va);
-	        if(size == 20)
-	        {
-	        	//cprintf("Block Size : %d ,Size : %d \n",blk_size,size);
-	        }
 	        if (blk_size >= size + 2 * sizeof(uint32)) {
-	        	//cprintf("error4040 \n");
 	            if (blk_size >= size + DYN_ALLOC_MIN_BLOCK_SIZE + 4 * sizeof(uint32)) {
-	            	//cprintf("error4041 \n");
 	                uint32 remaining_size = blk_size - size - 2 * sizeof(uint32);
 	                void *new_block_va = (void *)((char *)va + size + 2 * sizeof(uint32)); // casting to char because its 1 byte size
 
 	                // Refactoring the next block's previous pointer
 	                LIST_PREV(LIST_NEXT(blk)) = (struct BlockElement *)new_block_va;
-
+	                //LIST_NEXT(blk)->prev_next_info.le_prev = new_block_va;
 	                // Refactoring the previous block's next pointer
 	                LIST_NEXT(LIST_PREV(blk)) = (struct BlockElement *)new_block_va;
-
-	                //((struct BlockElement *) va)->prev_next_info->le_next
-	                //if(size == 20) cprintf("1\n");
+	                //LIST_PREV(blk)->prev_next_info.le_next = new_block_va;
 	                set_block_data(va, size + 2 * sizeof(uint32), 1);
 
-	               // cprintf("Allocated Block\n");
 	                set_block_data(new_block_va, remaining_size, 0);
-	                //cprintf("NotAllocated Block \n");
 	            } else {
-	            	//cprintf("error4042 \n");
 	            	// Refactoring the next block's previous pointer
 	            	LIST_PREV(LIST_NEXT(blk)) = LIST_PREV(blk);
 
@@ -246,12 +235,8 @@ void *alloc_block_FF(uint32 size)
 	            	LIST_NEXT(LIST_PREV(blk)) = LIST_NEXT(blk);
 
 	                set_block_data(va, blk_size, 1);
-	                //cprintf("suii1 \n");
 	            }
-	            //cprintf("suii2 \n");
-	            //cprintf("failed1 \n");
 	            return va;
-
 	        }
 	    }
 
@@ -260,13 +245,8 @@ void *alloc_block_FF(uint32 size)
 	    if (new_mem == (void *)-1) {
 	        return NULL;
 	    }
-	    //cprintf("New Mem: %x \n",new_mem);
-	    //cprintf("failed2 \n");
 	    set_block_data(new_mem, required_size, 1);
-	    //cprintf("success1 \n");
 	    return new_mem;
-
-
 
 }
 //=========================================
@@ -299,8 +279,98 @@ void *realloc_block_FF(void* va, uint32 new_size)
 {
 	//TODO: [PROJECT'24.MS1 - #08] [3] DYNAMIC ALLOCATOR - realloc_block_FF
 	//COMMENT THE FOLLOWING LINE BEFORE START CODING
-	panic("realloc_block_FF is not implemented yet");
+	//panic("realloc_block_FF is not implemented yet");
 	//Your Code is Here...
+
+
+	/*any address or size saved in header or footer are in single Bytes*/
+
+
+	if(va == NULL)
+	{
+		if(new_size != 0) return alloc_block_ff(new_size);
+		return NULL;
+	}
+
+	if(new_size == 0)
+	{
+		free_block(va);
+		return NULL;
+	}
+
+
+	new_size = ROUNDUP(new_size, 8);
+	//uint32 new_new_size = new_size + new_size%2);
+	new_size += (new_size%2);
+
+	//cur Block data
+	uint32 curBLOCK_size = get_block_size(va) /*BLOCK size in Bytes*/;
+	uint32 cur_size = curBLOCK_size - 8 /*8 Bytes = (Header + Footer) size*/;
+
+	//next Block data
+	void *next_cur_va = (void *)(FOOTER(va) + 2);
+	uint32 nextBLOCK_size = get_block_size(next_cur_va)/*&is_free_block(next_block_va)*/; //=0 if not free
+	uint32 next_cur_size = nextBLOCK_size - 8 /*8 Bytes = (Header + Footer) size*/;
+
+
+	//if the user needs the same size he owns
+	if(new_size == cur_size) return va;
+
+
+	if(new_size < cur_size)
+	{
+		uint32 remaining_size = cur_size - new_size; //remaining size in single Bytes
+		if(is_free_block(next_cur_va))
+		{
+			uint32 next_new_size = next_cur_size + remaining_size;
+			set_block_data(va, new_size, 1);
+			void *next_new_va = (void *)(FOOTER(va) + 2);
+			set_block_data(next_new_va, next_new_size, 0);
+		}
+		else
+		{
+			if(remaining_size>=16)
+			{
+				uint32 next_new_size = remaining_size - 8;/*+ next_cur_size&is_free_block(next_cur_va)*/
+				set_block_data(va, new_size, 1);
+				void *next_new_va = (void *)(FOOTER(va) + 2);
+				//insert new block to free_block_list
+				set_block_data(next_new_va, next_new_size, 0);
+			}
+			//else return va;
+		}
+		return va;
+	}
+
+	if(new_size > cur_size)
+	{
+		if(is_free_block(next_cur_va))
+		{
+			uint32 needed_size = new_size - cur_size; //needed size in single Bytes
+			if(needed_size>nextBLOCK_size) goto new_alloc;
+			uint32 remaining_size = nextBLOCK_size - needed_size;
+			if(remaining_size < 16)
+			{
+				//remove from free_block_list, then
+				set_block_data(va, cur_size + nextBLOCK_size, 1);
+			}
+			else
+			{
+				set_block_data(va, new_size, 1);
+				void *next_new_va = (void *)(FOOTER(va) + 2);
+				//update free_block_list
+				set_block_data(next_new_va, remaining_size, 0);
+			}
+			return va;
+		}
+		//else goto new_alloc;
+	}
+
+	new_alloc:
+	free_block(va); //set it free
+	return alloc_block_ff(new_size); //new allocation
+
+
 }
 
 /*********************************************************************************************/
