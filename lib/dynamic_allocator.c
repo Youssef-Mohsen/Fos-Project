@@ -243,9 +243,114 @@ void *alloc_block_BF(uint32 size)
 {
 	//TODO: [PROJECT'24.MS1 - BONUS] [3] DYNAMIC ALLOCATOR - alloc_block_BF
 	//COMMENT THE FOLLOWING LINE BEFORE START CODING
-	panic("alloc_block_BF is not implemented yet");
+	//panic("alloc_block_BF is not implemented yet");
 	//Your Code is Here...
+	//==================================================================================
+	//DON'T CHANGE THESE LINES==========================================================
+	//==================================================================================
+	{
+		if (size % 2 != 0) size++;	//ensure that the size is even (to use LSB as allocation flag)
+		if (size < DYN_ALLOC_MIN_BLOCK_SIZE)
+			size = DYN_ALLOC_MIN_BLOCK_SIZE ;
+		if (!is_initialized)
+		{
+			uint32 required_size = size + 2*sizeof(int) /*header & footer*/ + 2*sizeof(int) /*da begin & end*/ ;
+			uint32 da_start = (uint32)sbrk(ROUNDUP(required_size, PAGE_SIZE)/PAGE_SIZE);
+			uint32 da_break = (uint32)sbrk(0);
+			initialize_dynamic_allocator(da_start, da_break - da_start);
+			cprintf("Initialized \n");
+		}
+	}
+	//==================================================================================
+	//==================================================================================
 
+	struct BlockElement *blk = NULL;
+	void *best_va=NULL;
+	uint32 best_blk_size = (uint32)KERNEL_HEAP_MAX - 2 * sizeof(uint32);
+	bool internal = 0;
+	LIST_FOREACH(blk, &freeBlocksList) {
+		void *va = (void *)blk;
+		uint32 blk_size = get_block_size(va);
+		if (blk_size>=size + 2 * sizeof(uint32))
+		{
+			if (blk_size >= size + DYN_ALLOC_MIN_BLOCK_SIZE + 4 * sizeof(uint32))
+			{
+				if (best_blk_size > blk_size)
+				{
+					best_va = va;
+					best_blk_size = blk_size;
+				}
+			}
+			else
+			{
+				cprintf("288\n");
+				cprintf("Size : %d\n",size);
+				cprintf("Best Size : %d\n",blk_size);
+				print_blocks_list(freeBlocksList);
+				if (blk_size == size + 2 * sizeof(uint32)){
+					cprintf("291\n");
+					set_block_data(va, blk_size, 1);
+					LIST_REMOVE(&freeBlocksList,blk);
+					print_blocks_list(freeBlocksList);
+					return va;
+				}
+				else //if (blk_size> size + 2 * sizeof(uint32))
+				{
+					if (best_blk_size > blk_size)
+					{
+						cprintf("299\n");
+						internal = 1;
+						best_va = va;
+						best_blk_size = blk_size;
+					}
+				}
+			}
+		}
+
+	}
+
+	if (best_va !=NULL && internal ==0){
+		uint32 remaining_size = best_blk_size - size - 2 * sizeof(uint32);
+		void *new_block_va = (void *)((char *)best_va + size + 2 * sizeof(uint32));
+		set_block_data(best_va, size + 2 * sizeof(uint32), 1);
+
+		if (LIST_PREV((struct BlockElement *)best_va)==NULL)
+			{
+
+				LIST_INSERT_HEAD(&freeBlocksList, (struct BlockElement*)new_block_va);
+			}
+			else if (LIST_NEXT((struct BlockElement *)best_va)==NULL)
+			{
+
+				LIST_INSERT_TAIL(&freeBlocksList, (struct BlockElement*)new_block_va);
+			}
+			else
+			{
+
+				LIST_INSERT_AFTER(&freeBlocksList, (struct BlockElement *)best_va, (struct BlockElement*)new_block_va);
+			}
+			LIST_REMOVE(&freeBlocksList, (struct BlockElement *)best_va);
+			set_block_data(new_block_va, remaining_size, 0);
+			return best_va;
+	}
+	else if(internal == 1)
+	{
+
+		cprintf("291\n");
+		set_block_data(best_va, best_blk_size, 1);
+		LIST_REMOVE(&freeBlocksList,(struct BlockElement *)best_va);
+		print_blocks_list(freeBlocksList);
+		return best_va;
+
+	}
+	cprintf("sbrk\n");
+	uint32 required_size = size + 2 * sizeof(uint32);
+	void *new_mem = sbrk(ROUNDUP(required_size, PAGE_SIZE) / PAGE_SIZE);
+	if (new_mem == (void *)-1) {
+		return NULL; // Allocation failed
+	}
+	set_block_data(new_mem, required_size, 1);
+	return new_mem;
 }
 
 //===================================================
@@ -340,8 +445,97 @@ void *realloc_block_FF(void* va, uint32 new_size)
 {
 	//TODO: [PROJECT'24.MS1 - #08] [3] DYNAMIC ALLOCATOR - realloc_block_FF
 	//COMMENT THE FOLLOWING LINE BEFORE START CODING
-	panic("realloc_block_FF is not implemented yet");
+	//panic("realloc_block_FF is not implemented yet");
 	//Your Code is Here...
+
+
+	/*any address or size saved in header or footer are in single Bytes*/
+
+
+	if(va == NULL)
+	{
+		if(new_size != 0) return alloc_block_FF(new_size);
+		return NULL;
+	}
+
+	if(new_size == 0)
+	{
+		free_block(va);
+		return NULL;
+	}
+
+
+	new_size = ROUNDUP(new_size, 8);
+	//uint32 new_new_size = new_size + new_size%2);
+	new_size += (new_size%2);
+	uint32 newBloc_size = new_size + 8;
+	//cur Block data
+	uint32 curBLOCK_size = get_block_size(va) /*BLOCK size in Bytes*/;
+	uint32 cur_size = curBLOCK_size - 8 /*8 Bytes = (Header + Footer) size*/;
+
+	//next Block data
+	void *next_cur_va = (void *)(va + curBLOCK_size);
+	uint32 nextBLOCK_size = get_block_size(next_cur_va)/*&is_free_block(next_block_va)*/; //=0 if not free
+	uint32 next_cur_size = nextBLOCK_size - 8 /*8 Bytes = (Header + Footer) size*/;
+
+
+	//if the user needs the same size he owns
+	if(new_size == cur_size) return va;
+
+
+	if(new_size < cur_size)
+	{
+		uint32 remaining_size = cur_size - new_size; //remaining size in single Bytes
+		if(is_free_block(next_cur_va))
+		{
+			uint32 next_new_size = next_cur_size + remaining_size;
+			set_block_data(va, newBloc_size, 1);
+
+			void *next_new_va = (void *)(FOOTER(va) + 2);
+			set_block_data(next_new_va, next_new_size, 0);
+
+			//still needed edit freeBlocklist
+		}
+		else
+		{
+			if(remaining_size>=16)
+			{
+				uint32 next_new_size = remaining_size - 8;/*+ next_cur_size&is_free_block(next_cur_va)*/
+				set_block_data(va, newBloc_size, 1);
+				void *next_new_va = (void *)(FOOTER(va) + 2);
+				//insert new block to free_block_list
+				//set_block_data(next_new_va, next_new_size, 0);
+			}
+		}
+		return va;
+	}
+
+	else
+	{
+		if(is_free_block(next_cur_va))
+		{
+			uint32 needed_size = new_size - cur_size; //needed size in single Bytes
+			if(needed_size>nextBLOCK_size) goto new_alloc;
+			uint32 remaining_size = nextBLOCK_size - needed_size;
+			if(remaining_size < 16)
+			{
+				//remove from free_block_list, then
+				set_block_data(va, cur_size + nextBLOCK_size+8, 1);
+			}
+			else
+			{
+				set_block_data(va, newBloc_size, 1);
+				void *next_new_va = (void *)(FOOTER(va) + 2);
+				//update free_block_list
+				set_block_data(next_new_va, remaining_size, 0);
+			}
+			return va;
+		}
+		//else goto new_alloc;
+	}
+	new_alloc:
+	free_block(va); //set it free
+	return alloc_block_FF(new_size); //new allocation
 }
 
 /*********************************************************************************************/
