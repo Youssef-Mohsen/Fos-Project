@@ -283,22 +283,16 @@ void *alloc_block_BF(uint32 size)
 			}
 			else
 			{
-				cprintf("288\n");
-				cprintf("Size : %d\n",size);
-				cprintf("Best Size : %d\n",blk_size);
-				print_blocks_list(freeBlocksList);
 				if (blk_size == size + 2 * sizeof(uint32)){
 					cprintf("291\n");
 					set_block_data(va, blk_size, 1);
 					LIST_REMOVE(&freeBlocksList,blk);
-					print_blocks_list(freeBlocksList);
 					return va;
 				}
-				else //if (blk_size> size + 2 * sizeof(uint32))
+				else
 				{
 					if (best_blk_size > blk_size)
 					{
-						cprintf("299\n");
 						internal = 1;
 						best_va = va;
 						best_blk_size = blk_size;
@@ -335,15 +329,10 @@ void *alloc_block_BF(uint32 size)
 	}
 	else if(internal == 1)
 	{
-
-		cprintf("291\n");
 		set_block_data(best_va, best_blk_size, 1);
 		LIST_REMOVE(&freeBlocksList,(struct BlockElement *)best_va);
-		print_blocks_list(freeBlocksList);
 		return best_va;
-
 	}
-	cprintf("sbrk\n");
 	uint32 required_size = size + 2 * sizeof(uint32);
 	void *new_mem = sbrk(ROUNDUP(required_size, PAGE_SIZE) / PAGE_SIZE);
 	if (new_mem == (void *)-1) {
@@ -358,22 +347,17 @@ void *alloc_block_BF(uint32 size)
 //===================================================
 void merging(struct BlockElement *prev_block, struct BlockElement *next_block, void* va){
 	bool prev_is_free = 0, next_is_free = 0;
+
 	if (prev_block != NULL && (char *)prev_block + get_block_size(prev_block) == (char *)va) {
 		prev_is_free = 1;
 	}
 	if (next_block != NULL && (char *)va + get_block_size(va) == (char *)next_block) {
 		next_is_free = 1;
 	}
-
-
 	if(prev_is_free && next_is_free)
 	{
 		//merge - 2 sides
-		prev_block->prev_next_info.le_next = next_block->prev_next_info.le_next;
-		LIST_NEXT( next_block )->prev_next_info.le_prev = prev_block;
-
 		uint32 new_block_size = get_block_size(prev_block) + get_block_size(va) + get_block_size(next_block);
-
 		set_block_data(prev_block, new_block_size, 0);
 		LIST_REMOVE(&freeBlocksList, next_block);
 	}
@@ -386,26 +370,22 @@ void merging(struct BlockElement *prev_block, struct BlockElement *next_block, v
 	else if(next_is_free)
 	{
 		//merge - right side
-		if(prev_block != NULL) prev_block->prev_next_info.le_next = va;
-		LIST_NEXT( next_block )->prev_next_info.le_prev = va;
 
 		uint32 new_block_size = get_block_size(va) + get_block_size(next_block);
 		set_block_data(va, new_block_size, 0);
 
 		struct BlockElement *va_block = (struct BlockElement *)va;
-		va_block->prev_next_info.le_next = next_block->prev_next_info.le_next;
-		va_block->prev_next_info.le_prev = prev_block;
-
-		if(prev_block != NULL) LIST_NEXT(prev_block) = va_block;
-		else LIST_FIRST(&freeBlocksList) = va_block;
+		LIST_INSERT_BEFORE(&freeBlocksList, next_block, va_block);
+		LIST_REMOVE(&freeBlocksList, next_block);
 	}
 	else
 	{
 		struct BlockElement *va_block = (struct BlockElement *)va;
-		//check if the block should be inserted at the BEGINNING of the list
+
 		if(prev_block != NULL && next_block != NULL) LIST_INSERT_AFTER(&freeBlocksList, prev_block, va_block);
 		else if(prev_block != NULL) LIST_INSERT_TAIL(&freeBlocksList, va_block);
-		else {
+		else
+		{
 			LIST_INSERT_HEAD(&freeBlocksList, va_block);
 		}
 		set_block_data(va, get_block_size(va), 0);
@@ -421,6 +401,7 @@ void free_block(void *va)
 	//panic("free_block is not implemented yet");
 	//Your Code is Here...
 	struct BlockElement *prev_block = LIST_FIRST(&freeBlocksList);
+
 	if((char *)LIST_LAST(&freeBlocksList) < (char *)va){
 		merging(LIST_LAST(&freeBlocksList), NULL, va);
 	}
@@ -435,7 +416,6 @@ void free_block(void *va)
 			break;
 		}
 	}
-
 }
 
 //=========================================
