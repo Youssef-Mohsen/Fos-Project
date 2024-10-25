@@ -115,6 +115,11 @@ void initialize_dynamic_allocator(uint32 daStart, uint32 initSizeOfAllocatedSpac
     if(daStart < KERNEL_HEAP_START)
         return;
 
+     struct BlockElement * element = NULL;
+     LIST_FOREACH(element, &freeBlocksList)
+     {
+        LIST_REMOVE(&freeBlocksList,element);
+     }
 
     // Create the BEG Block
     struct Block_Start_End* beg_block = (struct Block_Start_End*) daStart;
