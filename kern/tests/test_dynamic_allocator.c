@@ -41,6 +41,7 @@ int check_block(void* va, void* expectedVA, uint32 expectedSize, uint8 expectedF
 	uint32 expectedData = expectedSize | expectedFlag ;
 	if(header != expectedData || footer != expectedData)
 	{
+
 		cprintf("wrong header/footer data. Expected %d, Actual H:%d F:%d\n", expectedData, header, footer);
 		return 0;
 	}
@@ -140,8 +141,11 @@ int test_initial_alloc(int ALLOC_STRATEGY)
 	for (int i = 0; i < numOfAllocs; ++i)
 	{
 		totalSizes += allocSizes[i] * allocCntPerSize ;
+
 	}
-	int remainSize = initAllocatedSpace - totalSizes - 2*sizeof(int) ; //exclude size of "DA Begin & End" blocks
+
+	int remainSize = initAllocatedSpace - totalSizes - 2*sizeof(int) ;
+	//exclude size of "DA Begin & End" blocks
 	//cprintf("\n********* Remaining size = %d\n", remainSize);
 	if (remainSize <= 0)
 	{
@@ -155,16 +159,22 @@ int test_initial_alloc(int ALLOC_STRATEGY)
 	{
 		for (int j = 0; j < allocCntPerSize; ++j)
 		{
+
 			actualSize = allocSizes[i] - sizeOfMetaData;
+
 			va = startVAs[idx] = alloc_block(actualSize, ALLOC_STRATEGY);
+
 			midVAs[idx] = va + actualSize/2 ;
 			endVAs[idx] = va + actualSize - sizeof(short);
 			//Check block
 			expectedVA = (curVA + sizeOfMetaData/2);
+
 			if (check_block(va, expectedVA, allocSizes[i], 1) == 0)
 			{
+
 				is_correct = 0;
 			}
+
 			curVA += allocSizes[i] ;
 			*(startVAs[idx]) = idx ;
 			*(midVAs[idx]) = idx ;
@@ -298,16 +308,20 @@ void test_alloc_block_FF()
 	for (int i = 0; i < numOfFFTests; ++i)
 	{
 		actualSize = testSizes[i] - sizeOfMetaData;
+		cprintf("311\n");
 		va = tstStartVAs[i] = alloc_block(actualSize, DA_FF);
+		cprintf("313\n");
 		tstMidVAs[i] = va + actualSize/2 ;
 		tstEndVAs[i] = va + actualSize - sizeof(short);
 		//Check block
 		cprintf("test#%d\n",i);
 		expectedVA = (void*)expectedVAs[i];
+		cprintf("319\n");
 		if (check_block(va, expectedVA, testSizes[i], 1) == 0)
 		{
 			is_correct = 0;
 		}
+		cprintf("324\n");
 		*(tstStartVAs[i]) = 353;
 		*(tstMidVAs[i]) = 353;
 		*(tstEndVAs[i]) = 353;
