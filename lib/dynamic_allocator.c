@@ -192,48 +192,37 @@ void *alloc_block_FF(uint32 size)
 	    LIST_FOREACH(blk, &freeBlocksList) {
 	        void *va = (void *)blk;
 	        uint32 blk_size = get_block_size(va);
-	        cprintf("Bloc Size : %d , Size : %d\n",blk_size,size);
-
 	        if (blk_size >= size + 2 * sizeof(uint32)) {
 	            if (blk_size >= size + DYN_ALLOC_MIN_BLOCK_SIZE + 4 * sizeof(uint32))
 	            {
 
-	                uint32 remaining_size = blk_size - size - 2 * sizeof(uint32);
-	                void *new_block_va = (void *)((char *)va + size + 2 * sizeof(uint32)); // casting to char because its 1 byte size
-	                set_block_data(va, size + 2 * sizeof(uint32), 1);
+				uint32 remaining_size = blk_size - size - 2 * sizeof(uint32);
+				void *new_block_va = (void *)((char *)va + size + 2 * sizeof(uint32)); // casting to char because its 1 byte size
+				set_block_data(va, size + 2 * sizeof(uint32), 1);
 
-	                if (LIST_PREV(blk)==NULL&&LIST_NEXT(blk)==NULL)
-	                {
-	                	LIST_FIRST(&freeBlocksList) =(struct BlockElement*)new_block_va;
-	                	set_block_data(new_block_va, remaining_size, 0);
-	                }
-	                else if (LIST_PREV(blk)==NULL)
-	                {
-	                	LIST_FIRST(&freeBlocksList) =(struct BlockElement*)new_block_va;
-	                	set_block_data(new_block_va, remaining_size, 0);
-	                }
-	                else if (LIST_NEXT(blk)==NULL)
-	                {
-	                	LIST_LAST(&freeBlocksList) =(struct BlockElement*)new_block_va;
-	                	set_block_data(new_block_va, remaining_size, 0);
-	                }
-	                else
-	                {
-						LIST_PREV(LIST_NEXT(blk)) = new_block_va;
-						LIST_NEXT(LIST_PREV(blk)) = new_block_va;
-						set_block_data(new_block_va, remaining_size, 0);
-	                }
+				if (LIST_PREV(blk)==NULL)
+				{
+					LIST_INSERT_HEAD(&freeBlocksList, (struct BlockElement*)new_block_va);
+				}
+				else if (LIST_NEXT(blk)==NULL)
+				{
+					LIST_INSERT_TAIL(&freeBlocksList, (struct BlockElement*)new_block_va);
+				}
+				else
+				{
+					LIST_INSERT_AFTER(&freeBlocksList, blk, (struct BlockElement*)new_block_va);
+				}
+				LIST_REMOVE(&freeBlocksList, blk);
+				set_block_data(new_block_va, remaining_size, 0);
 	            }
 	            else
 	            {
-	            	cprintf("225\n");
 	            	set_block_data(va, blk_size, 1);
 	            	LIST_REMOVE(&freeBlocksList,blk);
 	            }
 	            return va;
 	        }
 	    }
-	    cprintf("sbrk\n");
 	    uint32 required_size = size + 2 * sizeof(uint32);
 	    void *new_mem = sbrk(ROUNDUP(required_size, PAGE_SIZE) / PAGE_SIZE);
 		if (new_mem == (void *)-1) {
