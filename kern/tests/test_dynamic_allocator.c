@@ -41,7 +41,6 @@ int check_block(void* va, void* expectedVA, uint32 expectedSize, uint8 expectedF
 	uint32 expectedData = expectedSize | expectedFlag ;
 	if(header != expectedData || footer != expectedData)
 	{
-
 		cprintf("wrong header/footer data. Expected %d, Actual H:%d F:%d\n", expectedData, header, footer);
 		return 0;
 	}
@@ -168,10 +167,8 @@ int test_initial_alloc(int ALLOC_STRATEGY)
 			endVAs[idx] = va + actualSize - sizeof(short);
 			//Check block
 			expectedVA = (curVA + sizeOfMetaData/2);
-
 			if (check_block(va, expectedVA, allocSizes[i], 1) == 0)
 			{
-
 				is_correct = 0;
 			}
 
@@ -316,7 +313,6 @@ void test_alloc_block_FF()
 		//Check block
 		cprintf("test#%d\n",i);
 		expectedVA = (void*)expectedVAs[i];
-		cprintf("319\n");
 		if (check_block(va, expectedVA, testSizes[i], 1) == 0)
 		{
 			is_correct = 0;

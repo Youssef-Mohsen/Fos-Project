@@ -1,3 +1,6 @@
 /bochs.log
-/obj/kern/bochs.img
 /obj
+/obj/kern/bochs.img
+/obj/user
+
+
