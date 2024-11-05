@@ -4,6 +4,7 @@
 #include <inc/mmu.h>
 #include <inc/x86.h>
 #include <inc/assert.h>
+#include <inc/queue.h>
 
 #include <kern/proc/user_environment.h>
 #include "../trap/syscall.h"
@@ -143,6 +144,12 @@ void fixedPt2Str(fixed_point_t f, int num_dec_digits, char* output)
 
 }
 
+int __firstTimeSleep = 1;
+struct Channel __tstchan__ ;
+struct spinlock __tstchan_lk__;
+int __firstTimeSleepLock = 1;
+struct sleeplock __tstslplk__;
+
 void sys_utilities(char* utilityName, int value)
 {
 	if (strncmp(utilityName, "__BSDSetNice@", strlen("__BSDSetNice@")) == 0)
@@ -223,6 +230,64 @@ void sys_utilities(char* utilityName, int value)
 			cprintf("####################################################\n");
 			*numOfInstances = 1; //to indicate the success of test
 		}
+	}
+	else if (strcmp(utilityName, "__Sleep__") == 0)
+	{
+		if (__firstTimeSleep)
+		{
+			__firstTimeSleep = 0;
+			init_channel(&__tstchan__, "Test Channel");
+			init_spinlock(&__tstchan_lk__, "Test Channel Lock");
+		}
+		acquire_spinlock(&__tstchan_lk__);
+		sleep(&__tstchan__, &__tstchan_lk__);
+		release_spinlock(&__tstchan_lk__);
+	}
+	else if (strcmp(utilityName, "__WakeupOne__") == 0)
+	{
+		wakeup_one(&__tstchan__);
+	}
+	else if (strcmp(utilityName, "__WakeupAll__") == 0)
+	{
+		wakeup_all(&__tstchan__);
+	}
+	else if (strcmp(utilityName, "__GetChanQueueSize__") == 0)
+	{
+		int* numOfProcesses = (int*) value ;
+		*numOfProcesses = LIST_SIZE(&__tstchan__.queue);
+	}
+	else if (strcmp(utilityName, "__GetReadyQueueSize__") == 0)
+	{
+		int* numOfProcesses = (int*) value ;
+		*numOfProcesses = LIST_SIZE(&ProcessQueues.env_ready_queues[0]);
+	}
+	else if (strcmp(utilityName, "__AcquireSleepLock__") == 0)
+	{
+		if (__firstTimeSleepLock)
+		{
+			__firstTimeSleepLock = 0;
+			init_sleeplock(&__tstslplk__, "Test Sleep Lock");
+		}
+		acquire_sleeplock(&__tstslplk__);
+	}
+	else if (strcmp(utilityName, "__ReleaseSleepLock__") == 0)
+	{
+		release_sleeplock(&__tstslplk__);
+	}
+	else if (strcmp(utilityName, "__GetLockQueueSize__") == 0)
+	{
+		int* numOfProcesses = (int*) value ;
+		*numOfProcesses = LIST_SIZE(&__tstslplk__.chan.queue);
+	}
+	else if (strcmp(utilityName, "__GetLockValue__") == 0)
+	{
+		int* lockVal = (int*) value ;
+		*lockVal =__tstslplk__.locked;
+	}
+	else if (strcmp(utilityName, "__GetLockOwner__") == 0)
+	{
+		uint32* lockOwnerID = (uint32*) value ;
+		*lockOwnerID =__tstslplk__.pid;
 	}
 	if ((int)value < 0)
 	{
