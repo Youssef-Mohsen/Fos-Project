@@ -452,7 +452,7 @@ int execute_command(char *command_string)
 	return 0;
 }
 
-
+// Youssef Mohsen , Youssef Ahmed
 int process_command(int number_of_arguments, char** arguments)
 {
     struct Command * element = NULL;
@@ -465,7 +465,6 @@ int process_command(int number_of_arguments, char** arguments)
     {
         if (strcmp(arguments[0], commands[i].name) == 0)
         {
-            cprintf("%d %d \n",commands[i].num_of_args,number_of_arguments-1);
             if(commands[i].num_of_args != number_of_arguments-1)
             {
                 if (commands[i].num_of_args == -1 && number_of_arguments-1 > 0)

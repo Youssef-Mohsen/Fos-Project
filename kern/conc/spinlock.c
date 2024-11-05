@@ -53,6 +53,7 @@ void acquire_spinlock(struct spinlock *lk)
 // Release the lock.
 void release_spinlock(struct spinlock *lk)
 {
+//	cprintf("Proccess: %d", get_cpu_proc());
 	if(!holding_spinlock(lk))
 	{
 		printcallstack(lk);
