@@ -14,7 +14,40 @@ int initialize_kheap_dynamic_allocator(uint32 daStart, uint32 initSizeToAllocate
 {
 	//TODO: [PROJECT'24.MS2 - #01] [1] KERNEL HEAP - initialize_kheap_dynamic_allocator
 	// Write your code here, remove the panic and write your code
-	panic("initialize_kheap_dynamic_allocator() is not implemented yet...!!");
+	//panic("initialize_kheap_dynamic_allocator() is not implemented yet...!!");
+	start = daStart;
+	hard_limit = daLimit;
+	brk = daStart + initSizeToAllocate;
+
+	if(initSizeToAllocate > daLimit) panic("exceeds Limit");
+
+	 struct FrameInfo * start_block_area = (struct FrameInfo*) KERNEL_HEAP_START;
+	 struct FrameInfo * end_block_area = (struct FrameInfo*) daLimit;
+
+	 struct FrameInfo * start_page_area = (struct FrameInfo*) (daLimit + PAGE_SIZE);
+	 struct FrameInfo * end_page_area = (struct FrameInfo*) KERNEL_HEAP_MAX;
+
+	 uint32 page_area_size = (uint32)daStart+(uint32)brk;
+	 uint32 no_pages = page_area_size / (uint32)PAGE_SIZE;
+
+
+	 for(int i=0;i<no_pages;i++)
+	 {
+		 struct FrameInfo * ptr_frame;
+		int ret = allocate_frame(&ptr_frame);
+		if(ret != E_NO_MEM)
+		{
+			map_frame(ptr_page_directory,ptr_frame,(uint32)start_page_area+i*PAGE_SIZE,PERM_USER|PERM_WRITEABLE);
+		}
+		else
+		{
+			panic("No Memory");
+		}
+
+	 }
+	initialize_dynamic_allocator(daStart,initSizeToAllocate);
+
+	return 0;
 }
 
 void* sbrk(int numOfPages)
@@ -30,12 +63,54 @@ void* sbrk(int numOfPages)
 	 */
 
 	//MS2: COMMENT THIS LINE BEFORE START CODING==========
-	return (void*)-1 ;
+	//return (void*)-1 ;
 	//====================================================
 
 	//TODO: [PROJECT'24.MS2 - #02] [1] KERNEL HEAP - sbrk
 	// Write your code here, remove the panic and write your code
-	panic("sbrk() is not implemented yet...!!");
+	//panic("sbrk() is not implemented yet...!!");
+	if(numOfPages > 0)
+	{
+		uint32 size = numOfPages * PAGE_SIZE;
+		uint32 prev_brk=brk;
+		brk += size;
+		if((char *)brk > (char *)hard_limit) return (void *)-1;
+		struct Block_Start_End* end_block = (struct Block_Start_End*) (brk);
+		end_block->info = 1;
+
+		if((char *)LIST_LAST(&freeBlocksList) < (char *)prev_brk)
+		{
+				merging(LIST_LAST(&freeBlocksList), NULL, (void *)prev_brk);
+		}
+		else
+		{
+			merging(NULL, NULL, (void *)prev_brk);
+		}
+		for(int i=0;i<numOfPages;i++)
+		{
+		struct FrameInfo * ptr_frame;
+		int ret = allocate_frame(&ptr_frame);
+		if(ret != E_NO_MEM)
+		{
+			map_frame(ptr_page_directory,ptr_frame,prev_brk+i*PAGE_SIZE,PERM_USER|PERM_WRITEABLE);
+			return (void *)prev_brk;
+		}
+		else
+		{
+			return (void *)-1;
+		}
+		}
+
+	}
+	else if(numOfPages == 0)
+	{
+		return (void *) brk;
+	}
+	else
+	{
+		panic("can't be negative");
+
+	}
 }
 
 //TODO: [PROJECT'24.MS2 - BONUS#2] [1] KERNEL HEAP - Fast Page Allocator

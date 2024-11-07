@@ -233,7 +233,8 @@ void *alloc_block_FF(uint32 size)
 		if (new_mem == (void *)-1) {
 			return NULL; // Allocation failed
 		}
-		set_block_data(new_mem, required_size, 1);
+		//set_block_data(new_mem, required_size, 1);
+		alloc_block_FF(size);
 		return new_mem;
 }
 //=========================================
