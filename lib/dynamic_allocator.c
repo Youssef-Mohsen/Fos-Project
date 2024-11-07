@@ -233,7 +233,8 @@ void *alloc_block_FF(uint32 size)
 		if (new_mem == (void *)-1) {
 			return NULL; // Allocation failed
 		}
-		set_block_data(new_mem, required_size, 1);
+		//set_block_data(new_mem, required_size, 1);
+		alloc_block_FF(size);
 		return new_mem;
 }
 //=========================================
@@ -284,7 +285,6 @@ void *alloc_block_BF(uint32 size)
 			else
 			{
 				if (blk_size == size + 2 * sizeof(uint32)){
-					cprintf("291\n");
 					set_block_data(va, blk_size, 1);
 					LIST_REMOVE(&freeBlocksList,blk);
 					return va;
@@ -421,7 +421,6 @@ void free_block(void *va)
 //=========================================
 // [6] REALLOCATE BLOCK BY FIRST FIT:
 //=========================================
-
 void copy_data(void *va, void *new_va)
 {
 	uint32 va_size = get_block_size(va);
@@ -467,7 +466,7 @@ void *realloc_block_FF(void* va, uint32 new_size)
 	if(new_size == cur_size)
 	{
 		 return va;
-		 cprintf("0\n");
+
 	}
 
 
@@ -476,7 +475,7 @@ void *realloc_block_FF(void* va, uint32 new_size)
 		uint32 remaining_size = cur_size - new_size; //remaining size in single Bytes
 		if(is_free_block(next_va))
 		{
-			cprintf("11\n");
+
 			uint32 next_newBLOCK_size = nextBLOCK_size + remaining_size;
 			set_block_data(va, newBLOCK_size, 1);
 			void *next_new_va = (void *)(FOOTER(va) + 2);
@@ -496,22 +495,22 @@ void *realloc_block_FF(void* va, uint32 new_size)
 				uint32 list_size = LIST_SIZE(&freeBlocksList);
 				if(list_size == 0)
 				{
-					cprintf("12\n");
+
 					LIST_INSERT_HEAD(&freeBlocksList, (struct BlockElement *)next_new_va);
 				}
 				else if((struct BlockElement *)next_new_va < LIST_FIRST(&freeBlocksList))
 				{
-					cprintf("13\n");
+
 					LIST_INSERT_HEAD(&freeBlocksList, (struct BlockElement *)next_new_va);
 				}
 				else if(LIST_FIRST(&freeBlocksList) < (struct BlockElement *)next_new_va)
 				{
-					cprintf("14\n");
+
 					LIST_INSERT_TAIL(&freeBlocksList, (struct BlockElement *)next_new_va);
 				}
 				else
 				{
-					cprintf("15\n");
+
 					struct BlockElement *blk = NULL;
 					LIST_FOREACH(blk, &freeBlocksList)
 					{
@@ -538,7 +537,6 @@ void *realloc_block_FF(void* va, uint32 new_size)
 			uint32 needed_size = new_size - cur_size; //needed size in single Bytes
 			if(needed_size > nextBLOCK_size)
 			{
-				cprintf("21\n");
 				free_block(va); //set it free
 				void *new_va = alloc_block_FF(new_size); //new allocation
 				copy_data(va, new_va); //transfer data
@@ -547,7 +545,6 @@ void *realloc_block_FF(void* va, uint32 new_size)
 			uint32 remaining_size = nextBLOCK_size - needed_size;
 			if(remaining_size < 16) //merge next block to my cur block
 			{
-				cprintf("22\n");
 				//remove from free_block_list, then
 				LIST_REMOVE(&freeBlocksList, (struct BlockElement *)next_va);
 
@@ -556,7 +553,6 @@ void *realloc_block_FF(void* va, uint32 new_size)
 			}
 			else
 			{
-				cprintf("23/n");
 				newBLOCK_size = curBLOCK_size + needed_size;
 				set_block_data(va, newBLOCK_size, 1);
 				void *next_new_va = (void *)(FOOTER(va) + 2);
@@ -568,7 +564,6 @@ void *realloc_block_FF(void* va, uint32 new_size)
 			}
 			return va;
 		}
-		cprintf("24\n");
 	}
 
 	int abo_salah = 1; // abo salah NUMBER 1

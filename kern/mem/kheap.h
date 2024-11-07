@@ -41,7 +41,9 @@ unsigned int kheap_physical_address(unsigned int virtual_address);
 int numOfKheapVACalls ;
 
 
-//[PROJECT'24.MS2] add suitable code here
+//TODO: [PROJECT'24.MS2 - #01] [1] KERNEL HEAP - add suitable code here
 
-
+uint32 start;
+uint32 hard_limit;
+uint32 brk;
 #endif // FOS_KERN_KHEAP_H_
