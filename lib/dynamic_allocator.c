@@ -466,6 +466,7 @@ void *realloc_block_FF(void* va, uint32 new_size)
 	if(new_size == cur_size)
 	{
 		 return va;
+
 	}
 
 
@@ -474,6 +475,7 @@ void *realloc_block_FF(void* va, uint32 new_size)
 		uint32 remaining_size = cur_size - new_size; //remaining size in single Bytes
 		if(is_free_block(next_va))
 		{
+
 			uint32 next_newBLOCK_size = nextBLOCK_size + remaining_size;
 			set_block_data(va, newBLOCK_size, 1);
 			void *next_new_va = (void *)(FOOTER(va) + 2);
@@ -493,18 +495,22 @@ void *realloc_block_FF(void* va, uint32 new_size)
 				uint32 list_size = LIST_SIZE(&freeBlocksList);
 				if(list_size == 0)
 				{
+
 					LIST_INSERT_HEAD(&freeBlocksList, (struct BlockElement *)next_new_va);
 				}
 				else if((struct BlockElement *)next_new_va < LIST_FIRST(&freeBlocksList))
 				{
+
 					LIST_INSERT_HEAD(&freeBlocksList, (struct BlockElement *)next_new_va);
 				}
 				else if(LIST_FIRST(&freeBlocksList) < (struct BlockElement *)next_new_va)
 				{
+
 					LIST_INSERT_TAIL(&freeBlocksList, (struct BlockElement *)next_new_va);
 				}
 				else
 				{
+
 					struct BlockElement *blk = NULL;
 					LIST_FOREACH(blk, &freeBlocksList)
 					{
@@ -518,6 +524,7 @@ void *realloc_block_FF(void* va, uint32 new_size)
 				set_block_data(next_new_va, remaining_size, 0);
 				return va;
 			}
+			cprintf("16\n");
 		}
 		return va;
 	}

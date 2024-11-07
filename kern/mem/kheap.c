@@ -106,11 +106,10 @@ void* sbrk(int numOfPages)
 	{
 		return (void *) brk;
 	}
-	else
-	{
-		panic("can't be negative");
 
-	}
+		panic("can't be negative");
+		return (void *)-1;
+
 }
 
 //TODO: [PROJECT'24.MS2 - BONUS#2] [1] KERNEL HEAP - Fast Page Allocator
