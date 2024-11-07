@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "memory_manager.h": "c",
+        "memlayout.h": "c",
+        "kheap.h": "c"
+    }
+}
