@@ -77,7 +77,7 @@ void *sbrk(int numOfPages)
 			return (void *)-1;
 		struct Block_Start_End *end_block = (struct Block_Start_End *)(brk);
 		end_block->info = 1;
-
+	
 		if ((char *)LIST_LAST(&freeBlocksList) < (char *)prev_brk)
 		{
 			merging(LIST_LAST(&freeBlocksList), NULL, (void *)prev_brk);
@@ -133,22 +133,23 @@ void *kmalloc(unsigned int size)
 		uint32 no_of_pages = ROUNDUP(size ,PAGE_SIZE) / PAGE_SIZE;
 
 		uint32 i = hard_limit + 4096; // start: hardlimit + 4  ______ end: KERNEL_HEAP_MAX
-		uint32 batman;
+
+		uint32 *ptr_page_table;
 		while (i < KERNEL_HEAP_MAX)
 		{
 			bool ok = 0;
-			if ((i & PERM_PRESENT) != PERM_PRESENT)
+			if (!isPageAllocated(ptr_page_directory, i)) // page not allocated?
 			{
-				uint32 j = i + 1;
+				uint32 j = i + PAGE_SIZE; // <-- changed, was j = i + 1
 				uint32 cnt = 0;
 				while(cnt < no_of_pages - 1)
 				{
-					if ((j & PERM_PRESENT) == PERM_PRESENT)
+					if (isPageAllocated(ptr_page_directory, j))
 					{
-						i = j;
+						i = j + PAGE_SIZE;
 						goto sayed;
 					}
-					j ++;
+					j += PAGE_SIZE; // <-- changed, was j ++
 				}
 				ok = 1;
 				i = j;
@@ -156,17 +157,17 @@ void *kmalloc(unsigned int size)
 			sayed:
 			if(ok)
 			{
-				batman = i;
 				break;
 			}
-			i ++;
+			i += PAGE_SIZE; // <-- changed, was i++
 		}
-
+		
 		for (int j = 0; j < no_of_pages; j++)
 		{
 			struct FrameInfo *ptr_frame_info;
 			allocate_frame(&ptr_frame_info);
-			map_frame(ptr_page_directory, ptr_frame_info, i + j * 1024, PERM_USER|PERM_WRITEABLE); // a3raf el page mnen	
+			//map_frame(ptr_page_directory, ptr_frame_info, i + j * 1024, PERM_USER|PERM_WRITEABLE); REPLACED BY
+			map_frame(ptr_page_directory, ptr_frame_info, i + j * PAGE_SIZE, PERM_USER|PERM_WRITEABLE); // a3raf el page mnen	
 		}
 	}
 }

@@ -43,10 +43,28 @@ int numOfKheapVACalls ;
 
 
 //TODO: [PROJECT'24.MS2 - #01] [1] KERNEL HEAP - add suitable code here
+#include "memory_manager.h"
 
 uint32 start;
 uint32 hard_limit;
 uint32 brk;
+
+bool isPageAllocated(uint32 *ptr_page_directory, const uint32 virtual_address)
+{
+    uint32 * page_table;
+    if(get_page_table(ptr_page_directory, virtual_address, page_table) == TABLE_NOT_EXIST)
+    {
+        return 0;
+    }
+    else
+    {
+        uint32 page_directory_entry = ptr_page_directory[PDX(virtual_address)];
+        if ((page_directory_entry & PERM_PRESENT) != PERM_PRESENT)
+            return 0;
+        else
+            return 1;
+    }
+}
 
 // // LIST_HEAD(FrameInfo_List, FrameInfo);
 // LIST_HEAD(PageCluster_List, PageCluster);
