@@ -4,6 +4,23 @@
 #include <inc/dynamic_allocator.h>
 #include "memory_manager.h"
 
+bool isPageAllocated(uint32 *ptr_page_directory, const uint32 virtual_address)
+{
+    uint32 * page_table;
+    if(get_page_table(ptr_page_directory, virtual_address, &page_table) == TABLE_NOT_EXIST)
+    {
+        return 0;
+    }
+    else
+    {
+        uint32 page_directory_entry = ptr_page_directory[PDX(virtual_address)];
+        if ((page_directory_entry & PERM_PRESENT) != PERM_PRESENT)
+            return 0;
+        else
+            return 1;
+    }
+}
+
 // Initialize the dynamic allocator of kernel heap with the given start address, size & limit
 // All pages in the given range should be allocated
 // Remember: call the initialize_dynamic_allocator(..) to complete the initialization
@@ -120,6 +137,7 @@ void *kmalloc(unsigned int size)
 
 	// use "isKHeapPlacementStrategyFIRSTFIT() ..." functions to check the current strategy
 
+	void *ptr = NULL;
 	if (size <= DYN_ALLOC_MAX_BLOCK_SIZE)
 	{
 		if (isKHeapPlacementStrategyFIRSTFIT())
@@ -134,10 +152,9 @@ void *kmalloc(unsigned int size)
 
 		uint32 i = hard_limit + 4096; // start: hardlimit + 4  ______ end: KERNEL_HEAP_MAX
 
-		uint32 *ptr_page_table;
+		bool ok = 0;
 		while (i < KERNEL_HEAP_MAX)
 		{
-			bool ok = 0;
 			if (!isPageAllocated(ptr_page_directory, i)) // page not allocated?
 			{
 				uint32 j = i + PAGE_SIZE; // <-- changed, was j = i + 1
@@ -146,13 +163,13 @@ void *kmalloc(unsigned int size)
 				{
 					if (isPageAllocated(ptr_page_directory, j))
 					{
-						i = j + PAGE_SIZE;
+						i = j;
 						goto sayed;
 					}
 					j += PAGE_SIZE; // <-- changed, was j ++
+					cnt++;
 				}
 				ok = 1;
-				i = j;
 			}
 			sayed:
 			if(ok)
@@ -161,7 +178,7 @@ void *kmalloc(unsigned int size)
 			}
 			i += PAGE_SIZE; // <-- changed, was i++
 		}
-		
+		if(!ok) return NULL;
 		for (int j = 0; j < no_of_pages; j++)
 		{
 			struct FrameInfo *ptr_frame_info;
@@ -169,7 +186,9 @@ void *kmalloc(unsigned int size)
 			//map_frame(ptr_page_directory, ptr_frame_info, i + j * 1024, PERM_USER|PERM_WRITEABLE); REPLACED BY
 			map_frame(ptr_page_directory, ptr_frame_info, i + j * PAGE_SIZE, PERM_USER|PERM_WRITEABLE); // a3raf el page mnen	
 		}
+		ptr = (void*)i;
 	}
+	return ptr;
 }
 
 void kfree(void *virtual_address)
