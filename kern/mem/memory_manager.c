@@ -396,6 +396,7 @@ int map_frame(uint32 *ptr_page_directory, struct FrameInfo *ptr_frame_info, uint
 	/*NEW'23 el7:)
 	 * [DONE] map_frame(): KEEP THE VALUES OF THE AVAILABLE BITS*/
 	uint32 pte_available_bits = ptr_page_table[PTX(virtual_address)] & PERM_AVAILABLE;
+
 	ptr_page_table[PTX(virtual_address)] = CONSTRUCT_ENTRY(physical_address , pte_available_bits | perm | PERM_PRESENT);
 	/*********************************************************************************/
 
