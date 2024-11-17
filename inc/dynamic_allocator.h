@@ -33,7 +33,8 @@ struct Block_Start_End
 {
 	uint32 info;
 };// __attribute__((packed))
-
+uint32 end_add;
+struct Block_Start_End* end_block;
 struct BlockElement
 {
 	LIST_ENTRY(BlockElement) prev_next_info;	/* linked list links */
@@ -74,5 +75,5 @@ void *alloc_block_WF(uint32 size);
 void *alloc_block_NF(uint32 size);
 void free_block(void* va);
 void *realloc_block_FF(void* va, uint32 new_size);
-
+void merging(struct BlockElement *prev_block, struct BlockElement *next_block, void* va);
 #endif
