@@ -36,7 +36,7 @@ inline struct WorkingSetElement* env_page_ws_list_create_element(struct Env* e, 
 	element->virtual_address=virtual_address;
 
 	if (element ==NULL){
-		panic("env_page_ws_list_create_element paniced");
+		panic("env_page_ws_list_create_element() paniced");
 	}
 	else{
 	return element;
