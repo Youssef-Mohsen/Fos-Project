@@ -1,7 +1,7 @@
 00200010 R __STAB_BEGIN__
-002040b4 R __STAB_END__
-002040b5 R __STABSTR_BEGIN__
-00206e52 R __STABSTR_END__
+00204144 R __STAB_END__
+00204145 R __STABSTR_BEGIN__
+00206f5d R __STABSTR_END__
 00800020 T _start
 00800031 t args_exist
 00800038 T _main
@@ -100,8 +100,10 @@
 008168c0 B printProgName
 008168c4 B freeBlocksList
 008168d4 B old_pf_counter
-008168d8 B _ModifiedBufferLength
-008168dc B argv0
+008168d8 B end_block
+008168dc B end_add
+008168e0 B _ModifiedBufferLength
+008168e4 B argv0
 eec00000 A envs
 ef400000 A vpt
 ef7bd000 A vpd

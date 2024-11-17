@@ -114,7 +114,7 @@ void initialize_dynamic_allocator(uint32 daStart, uint32 initSizeOfAllocatedSpac
         return;
     if(daStart < KERNEL_HEAP_START)
         return;
-
+    end_add = daStart + initSizeOfAllocatedSpace - sizeof(struct Block_Start_End);
      struct BlockElement * element = NULL;
      LIST_FOREACH(element, &freeBlocksList)
      {
@@ -126,9 +126,8 @@ void initialize_dynamic_allocator(uint32 daStart, uint32 initSizeOfAllocatedSpac
     beg_block->info = 1;
 
     // Create the END Block
-    struct Block_Start_End* end_block = (struct Block_Start_End*) (daStart + initSizeOfAllocatedSpace - sizeof(struct Block_Start_End));
+    end_block = (struct Block_Start_End*) (end_add);
     end_block->info = 1;
-
     // Create the first free block
     struct BlockElement* first_free_block = (struct BlockElement*)(daStart + 2*sizeof(struct Block_Start_End));
 
@@ -143,7 +142,9 @@ void initialize_dynamic_allocator(uint32 daStart, uint32 initSizeOfAllocatedSpac
 
     // Link the first free block into the free block list
     LIST_INSERT_HEAD(&freeBlocksList , first_free_block);
+    print_blocks_list(freeBlocksList);
 }
+
 
 
 //==================================
@@ -164,6 +165,7 @@ void set_block_data(void* va, uint32 totalSize, bool isAllocated)
 //=========================================
 // [3] ALLOCATE BLOCK BY FIRST FIT:
 //=========================================
+
 void *alloc_block_FF(uint32 size)
 {
 	//==================================================================================
@@ -193,16 +195,20 @@ void *alloc_block_FF(uint32 size)
 	 if (size == 0) {
 	        return NULL;
 	    }
+	// cprintf("size is %d \n",size);
+
+
 	    struct BlockElement *blk = NULL;
 	    LIST_FOREACH(blk, &freeBlocksList) {
 	        void *va = (void *)blk;
 	        uint32 blk_size = get_block_size(va);
-	        if (blk_size >= size + 2 * sizeof(uint32)) {
+
+	        if(blk_size >= size + 2 * sizeof(uint32)) {
 	            if (blk_size >= size + DYN_ALLOC_MIN_BLOCK_SIZE + 4 * sizeof(uint32))
 	            {
 
 				uint32 remaining_size = blk_size - size - 2 * sizeof(uint32);
-				void *new_block_va = (void *)((char *)va + size + 2 * sizeof(uint32)); // casting to char because its 1 byte size
+				void *new_block_va = (void *)((char *)va + size + 2 * sizeof(uint32));
 				set_block_data(va, size + 2 * sizeof(uint32), 1);
 
 				if (LIST_PREV(blk)==NULL)
@@ -222,19 +228,26 @@ void *alloc_block_FF(uint32 size)
 	            }
 	            else
 	            {
+
 	            	set_block_data(va, blk_size, 1);
 	            	LIST_REMOVE(&freeBlocksList,blk);
 	            }
 	            return va;
 	        }
 	    }
+
 	    uint32 required_size = size + 2 * sizeof(uint32);
 	    void *new_mem = sbrk(ROUNDUP(required_size, PAGE_SIZE) / PAGE_SIZE);
 		if (new_mem == (void *)-1) {
 			return NULL; // Allocation failed
 		}
-		//set_block_data(new_mem, required_size, 1);
-		alloc_block_FF(size);
+		else {
+			end_block = (struct Block_Start_End*) (new_mem + ROUNDUP(required_size, PAGE_SIZE)-sizeof(int));
+			end_block->info = 1;
+		set_block_data(new_mem, ROUNDUP(required_size, PAGE_SIZE), 1);
+		free_block(new_mem);
+		return alloc_block_FF(size);
+		}
 		return new_mem;
 }
 //=========================================
@@ -334,12 +347,20 @@ void *alloc_block_BF(uint32 size)
 		return best_va;
 	}
 	uint32 required_size = size + 2 * sizeof(uint32);
-	void *new_mem = sbrk(ROUNDUP(required_size, PAGE_SIZE) / PAGE_SIZE);
-	if (new_mem == (void *)-1) {
-		return NULL; // Allocation failed
-	}
-	set_block_data(new_mem, required_size, 1);
-	return new_mem;
+		    void *new_mem = sbrk(ROUNDUP(required_size, PAGE_SIZE) / PAGE_SIZE);
+			if (new_mem == (void *)-1) {
+				return NULL; // Allocation failed
+			}
+			else {
+				end_block = (struct Block_Start_End*) (new_mem + ROUNDUP(required_size, PAGE_SIZE)-sizeof(int));
+				end_block->info = 1;
+				cprintf("251\n");
+			cprintf("address : %x\n",new_mem);
+			set_block_data(new_mem, ROUNDUP(required_size, PAGE_SIZE), 1);
+			free_block(new_mem);
+			return alloc_block_FF(size);
+			}
+			return new_mem;
 }
 
 //===================================================
