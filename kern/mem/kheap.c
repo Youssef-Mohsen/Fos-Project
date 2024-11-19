@@ -10,6 +10,9 @@
 //Return:
 //	On success: 0
 //	Otherwise (if no memory OR initial size exceed the given limit): PANIC
+
+uint32 no_pages_alloc[NUM_OF_KHEAP_PAGES];
+uint32 to_virtual[1048576];
 int initialize_kheap_dynamic_allocator(uint32 daStart, uint32 initSizeToAllocate, uint32 daLimit)
 {
 	//TODO: [PROJECT'24.MS2 - #01] [1] KERNEL HEAP - initialize_kheap_dynamic_allocator
@@ -37,7 +40,9 @@ int initialize_kheap_dynamic_allocator(uint32 daStart, uint32 initSizeToAllocate
 		int ret = allocate_frame(&ptr_frame);
 		if(ret != E_NO_MEM)
 		{
-			map_frame(ptr_page_directory,ptr_frame,(uint32)start_block_area+i*PAGE_SIZE,PERM_USER|PERM_WRITEABLE);
+			map_frame(ptr_page_directory,ptr_frame,(uint32)start_block_area+i*PAGE_SIZE,PERM_WRITEABLE);
+			uint32 pa = kheap_physical_address((uint32)start_block_area+i*PAGE_SIZE);
+			to_virtual[pa / PAGE_SIZE] = (uint32)start_block_area+i*PAGE_SIZE;
 		}
 		else
 		{
@@ -82,7 +87,9 @@ void* sbrk(int numOfPages)
 			int ret = allocate_frame(&ptr_frame);
 			if(ret != E_NO_MEM)
 			{
-				map_frame(ptr_page_directory,ptr_frame,prev_brk+i*PAGE_SIZE,PERM_USER|PERM_WRITEABLE);
+				map_frame(ptr_page_directory,ptr_frame,prev_brk+i*PAGE_SIZE,PERM_WRITEABLE);
+				uint32 pa = kheap_physical_address(prev_brk+i*PAGE_SIZE);
+				to_virtual[pa / PAGE_SIZE] = prev_brk+i*PAGE_SIZE;
 			}
 			else
 			{
@@ -98,39 +105,17 @@ void* sbrk(int numOfPages)
 		return (void *) brk;
 	}
 
-	//panic("can't be negative");
 	return (void *)-1;
 }
 
 //TODO: [PROJECT'24.MS2 - BONUS#2] [1] KERNEL HEAP - Fast Page Allocator
-
 bool isPageAllocated(uint32 *ptr_page_directory, const uint32 virtual_address)
 {
-
-	uint32 page_permissions = pt_get_page_permissions(ptr_page_directory, virtual_address);
-	//cprintf("page_permissions : %d \n",page_permissions & PERM_PRESENT);
-	if ((page_permissions & PERM_PRESENT) == PERM_PRESENT)
-    {
-    	return 1;
-    }
-    return 0;
-
+	uint32* ptr_pageTable = NULL;
+	struct FrameInfo *ptr_frame_info = get_frame_info(ptr_page_directory, virtual_address, &ptr_pageTable);
+	if (ptr_frame_info == NULL) return 0;
+	return 1;
 }
-
-typedef LIST_ENTRY(PagesAllocated) Page_LIST_entry;
-
-LIST_HEAD(PageAlloc_LIST, PagesAllocated);
-struct PageAlloc_LIST pagesAllocList;
-
-struct PagesAllocated
-{
-	Page_LIST_entry prev_next_info;
-    uint32 numOfPages;
-
-};// attribute((packed))
-
-
-
 
 void *kmalloc(unsigned int size)
 {
@@ -146,15 +131,12 @@ void *kmalloc(unsigned int size)
 	if (size <= DYN_ALLOC_MAX_BLOCK_SIZE)
 	{
 		if (isKHeapPlacementStrategyFIRSTFIT())
-			return alloc_block_FF(size);
+			ptr = alloc_block_FF(size);
 		else if (isKHeapPlacementStrategyBESTFIT())
-			return alloc_block_BF(size);
+			ptr = alloc_block_BF(size);
 	}
 	else if(num_pages < max_no_of_pages - 1) // the else statement in kern/mem/kheap.c/kmalloc is wrong, rewrite it to be correct.
 	{
-		// required pages?
-		uint32 no_of_pages = ROUNDUP(size ,PAGE_SIZE) / PAGE_SIZE;
-
 		uint32 i = hard_limit + PAGE_SIZE; // start: hardlimit + 4  ______ end: KERNEL_HEAP_MAX
 		bool ok = 0;
 		while (i < (uint32)KERNEL_HEAP_MAX)
@@ -163,7 +145,7 @@ void *kmalloc(unsigned int size)
 			{
 				uint32 j = i + (uint32)PAGE_SIZE; // <-- changed, was j = i + 1
 				uint32 cnt = 0;
-				while(cnt < no_of_pages - 1)
+				while(cnt < num_pages - 1)
 				{
 					if(j >= (uint32)KERNEL_HEAP_MAX) return NULL;
 					if (isPageAllocated(ptr_page_directory, j))
@@ -188,7 +170,7 @@ void *kmalloc(unsigned int size)
 		}
 
 		if(!ok) return NULL;
-		for (int k = 0; k < no_of_pages; k++)
+		for (int k = 0; k < num_pages; k++)
 		{
 			struct FrameInfo *ptr_frame_info;
 			int ret = allocate_frame(&ptr_frame_info);
@@ -203,13 +185,13 @@ void *kmalloc(unsigned int size)
 			}
 		}
 		ptr = (void*)i;
-		struct PagesAllocated *page_alloc = (struct PagesAllocated *)i;
-		page_alloc->numOfPages = no_of_pages;
-		LIST_INSERT_TAIL(&pagesAllocList, page_alloc);
 
+		no_pages_alloc[i / PAGE_SIZE] = num_pages;
 
-		cprintf("Ptr Allocated:%x\n", i);
-		cprintf("Pages: %d\n", no_of_pages);
+		for(int i = 0; i < num_pages; i++){
+			uint32 pa = kheap_physical_address((uint32)ptr + i * PAGE_SIZE);
+			to_virtual[pa / PAGE_SIZE] = (uint32)ptr + i * PAGE_SIZE;
+		}
 	}
 	else
 	{
@@ -228,26 +210,13 @@ void kfree(void *va)
     // you need to get the size of the given allocation using its address
     // refer to the project presentation and documentation for details
     uint32 pageA_start = hard_limit + PAGE_SIZE;
-    cprintf("va: %x\n", (uint32)va);
     if((uint32)va < hard_limit){
-    	cprintf("213\n");
         free_block(va);
     } else if((uint32)va >= pageA_start && (uint32)va < KERNEL_HEAP_MAX){
-    	cprintf("216\n");
-    	int no_of_pages = 0;
-
-    	struct PagesAllocated *blk = NULL;
-		LIST_FOREACH(blk, &pagesAllocList) {
-			if((uint32*)blk == (uint32*)va){
-				no_of_pages = blk->numOfPages;
-				LIST_REMOVE(&pagesAllocList, blk);
-				break;
-			}
-		}
-    	cprintf("num of pages: %d\n", no_of_pages);
+    	uint32 no_of_pages = no_pages_alloc[(uint32)va / PAGE_SIZE];
 		for(int i = 0; i < no_of_pages; i++){
-			uint32* ptr_page_table = NULL;
-			struct FrameInfo *ptr_frame_info = get_frame_info(ptr_page_directory, (uint32)va + i*PAGE_SIZE, &ptr_page_table);
+			uint32 pa = kheap_physical_address((uint32)va + i*PAGE_SIZE);
+			to_virtual[pa / PAGE_SIZE] = 0;
 			unmap_frame(ptr_page_directory, (uint32)va + i*PAGE_SIZE);
 		}
     } else{
@@ -291,22 +260,10 @@ unsigned int kheap_virtual_address(unsigned int physical_address)
 	// EFFICIENT IMPLEMENTATION ~O(1) IS REQUIRED ==================
 	////////////get it in block Allocator//////////////////
 	uint32 offset = PGOFF(physical_address);
+	uint32 va = to_virtual[physical_address / PAGE_SIZE];
+	if(va) va += offset;
 
-	struct FrameInfo *ptr_frame_info = to_frame_info(physical_address - offset);
-	if(ptr_frame_info->isBuffered){
-		uint32 va = ptr_frame_info->bufferedVA + offset;
-		return va;
-	}
-
-	uint32 i = KERNEL_HEAP_START;
-	while (i < KERNEL_HEAP_MAX)
-	{
-		if(kheap_physical_address(i) == physical_address - offset){
-			return i + offset;
-		}
-		i += PAGE_SIZE;
-	}
-	return 0;
+	return va;
 }
 //=================================================================================//
 //============================== BONUS FUNCTION ===================================//
