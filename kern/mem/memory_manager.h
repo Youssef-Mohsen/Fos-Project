@@ -69,6 +69,7 @@ struct FrameInfo *get_frame_info(uint32 *ptr_page_directory, uint32 virtual_addr
 void decrement_references(struct FrameInfo* ptr_frame_info);
 void initialize_frame_info(struct FrameInfo *ptr_frame_info);
 
+
 static inline uint32 to_frame_number(struct FrameInfo *ptr_frame_info)
 {
 	return ptr_frame_info - frames_info;
