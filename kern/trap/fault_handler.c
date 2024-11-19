@@ -244,8 +244,44 @@ void page_fault_handler(struct Env * faulted_env, uint32 fault_va)
 		//cprintf("PLACEMENT=========================WS Size = %d\n", wsSize );
 		//TODO: [PROJECT'24.MS2 - #09] [2] FAULT HANDLER I - Placement
 		// Write your code here, remove the panic and write your code
-		panic("page_fault_handler().PLACEMENT is not implemented yet...!!");
+		//panic("page_fault_handler().PLACEMENT is not implemented yet...!!");
 
+		/*
+		uint32 retK = (uint32)kmalloc(PAGE_SIZE);
+		if (retK==0)
+		{
+			panic("page_fault_handler() NO MEM");
+		}
+
+		struct FrameInfo * ptr_frame;
+		int retk = allocate_frame(&ptr_frame);
+		if(retk != E_NO_MEM)
+		{
+			map_frame(ptr_page_directory,ptr_frame,fault_va,PERM_WRITEABLE);
+		}*/
+
+		int ret = pf_read_env_page(faulted_env,(void*)fault_va);
+
+		if (ret == E_PAGE_NOT_EXIST_IN_PF)
+		{
+			if ((fault_va & PERM_PRESENT)==PERM_PRESENT)
+			{
+				cprintf("exit 4\n");
+				env_exit();
+			}
+		}
+		cprintf("skip\n");
+		struct WorkingSetElement* wse = env_page_ws_list_create_element(faulted_env, fault_va);
+		wse = env_page_ws_list_create_element(faulted_env, (uint32) faulted_env->kstack);
+		LIST_INSERT_TAIL(&(faulted_env->page_WS_list), wse);
+		if (LIST_SIZE(&(faulted_env->page_WS_list)) == faulted_env->page_WS_max_size)
+		{
+			faulted_env->page_last_WS_element = LIST_FIRST(&(faulted_env->page_WS_list));
+		}
+		else
+		{
+			faulted_env->page_last_WS_element = NULL;
+		}
 		//refer to the project presentation and documentation for details
 	}
 	else
