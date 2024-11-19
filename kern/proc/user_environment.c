@@ -889,9 +889,9 @@ void* create_user_kern_stack(uint32* ptr_user_page_directory)
 	*/
 
 	void* ret = kmalloc(KERNEL_STACK_SIZE);
+	if (ret==NULL) panic("create_user_kern_stack() failed");
 	pt_set_page_permissions(ptr_user_page_directory,(uint32)ret,0,PERM_PRESENT);
 
-	if (ret==NULL) panic("create_user_kern_stack() failed");
 	return ret;
 
 #else

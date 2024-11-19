@@ -252,13 +252,13 @@ void page_fault_handler(struct Env * faulted_env, uint32 fault_va)
 		{
 			panic("page_fault_handler() NO MEM");
 		}
-
+		*/
 		struct FrameInfo * ptr_frame;
 		int retk = allocate_frame(&ptr_frame);
 		if(retk != E_NO_MEM)
 		{
-			map_frame(ptr_page_directory,ptr_frame,fault_va,PERM_WRITEABLE);
-		}*/
+			map_frame(faulted_env->env_page_directory,ptr_frame,fault_va,0);
+		}
 
 		int ret = pf_read_env_page(faulted_env,(void*)fault_va);
 
