@@ -21,7 +21,7 @@ inline struct WorkingSetElement* env_page_ws_list_create_element(struct Env* e, 
 	//COMMENT THE FOLLOWING LINE BEFORE START CODING
 	//panic("env_page_ws_list_create_element is not implemented yet");
 	//Your Code is Here...
-
+	/*
 	struct FrameInfo * ptr_FrameInfo;
 	int ret = allocate_frame(&ptr_FrameInfo);
 	if (ret == E_NO_MEM)
@@ -41,6 +41,11 @@ inline struct WorkingSetElement* env_page_ws_list_create_element(struct Env* e, 
 	else{
 	return element;
 	}
+	*/
+	void* retK = kmalloc(sizeof(struct WorkingSetElement));
+	if (retK==NULL) panic("env_page_ws_list_create_element failed no mem");
+	struct WorkingSetElement* element =(struct WorkingSetElement*)retK;
+	return element;
 
 }
 inline void env_page_ws_invalidate(struct Env* e, uint32 virtual_address)
