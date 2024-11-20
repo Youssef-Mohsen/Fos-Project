@@ -139,10 +139,27 @@ void* sys_sbrk(int numOfPages)
 	//TODO: [PROJECT'24.MS2 - #11] [3] USER HEAP - sys_sbrk
 	/*====================================*/
 	/*Remove this line before start coding*/
-	return (void*)-1 ;
+//	return (void*)-1 ;
 	/*====================================*/
 	struct Env* env = get_cpu_proc(); //the current running Environment to adjust its break limit
+	if(numOfPages > 0)
+	{
+		uint32 size = numOfPages * PAGE_SIZE;
+		uint32 prev_brk = env->heap_brk;
 
+		if(env->heap_brk + size > env->heap_hard_limit || numOfPages <= LIST_SIZE(&MemFrameLists.free_frame_list)) return (void *)-1;
+
+		allocate_user_mem(env, prev_brk, size);
+		env->heap_brk += size;
+		return (void *)prev_brk;
+
+	}
+	else if(numOfPages == 0)
+	{
+		return (void *) env->heap_brk;
+	}
+
+	return (void *)-1;
 
 }
 
@@ -159,7 +176,11 @@ void allocate_user_mem(struct Env* e, uint32 virtual_address, uint32 size)
 
 	//TODO: [PROJECT'24.MS2 - #13] [3] USER HEAP [KERNEL SIDE] - allocate_user_mem()
 	// Write your code here, remove the panic and write your code
-	panic("allocate_user_mem() is not implemented yet...!!");
+//	panic("allocate_user_mem() is not implemented yet...!!");
+	uint32 no_of_pages = ROUNDUP(size, PAGE_SIZE) / PAGE_SIZE;
+	for(int i = 0; i < no_of_pages; i++){
+		e->isPageMarked[virtual_address / PAGE_SIZE] = 1;
+	}
 }
 
 //=====================================
@@ -175,10 +196,12 @@ void free_user_mem(struct Env* e, uint32 virtual_address, uint32 size)
 
 	//TODO: [PROJECT'24.MS2 - #15] [3] USER HEAP [KERNEL SIDE] - free_user_mem
 	// Write your code here, remove the panic and write your code
-	panic("free_user_mem() is not implemented yet...!!");
+//	panic("free_user_mem() is not implemented yet...!!");
 
 
 	//TODO: [PROJECT'24.MS2 - BONUS#3] [3] USER HEAP [KERNEL SIDE] - O(1) free_user_mem
+	e->isPageMarked[virtual_address/PAGE_SIZE] = 0;
+
 }
 
 //=====================================

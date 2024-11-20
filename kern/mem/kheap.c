@@ -125,7 +125,7 @@ void *kmalloc(unsigned int size)
 	// use "isKHeapPlacementStrategyFIRSTFIT() ..." functions to check the current strategy
 
 	uint32 num_pages = ROUNDUP(size ,PAGE_SIZE) / PAGE_SIZE;
-	uint32 max_no_of_pages = ROUNDUP((uint32)KERNEL_HEAP_MAX - hard_limit + (uint32)PAGE_SIZE ,PAGE_SIZE) / PAGE_SIZE;
+	uint32 max_no_of_pages = ROUNDDOWN((uint32)KERNEL_HEAP_MAX - (hard_limit + (uint32)PAGE_SIZE),PAGE_SIZE) / PAGE_SIZE;
 
 	void *ptr = NULL;
 	if (size <= DYN_ALLOC_MAX_BLOCK_SIZE)
@@ -135,7 +135,7 @@ void *kmalloc(unsigned int size)
 		else if (isKHeapPlacementStrategyBESTFIT())
 			ptr = alloc_block_BF(size);
 	}
-	else if(num_pages < max_no_of_pages - 1) // the else statement in kern/mem/kheap.c/kmalloc is wrong, rewrite it to be correct.
+	else if(num_pages <= max_no_of_pages) // (-1) the else statement in kern/mem/kheap.c/kmalloc is wrong, rewrite it to be correct.
 	{
 		uint32 i = hard_limit + PAGE_SIZE; // start: hardlimit + 4  ______ end: KERNEL_HEAP_MAX
 		bool ok = 0;
@@ -278,10 +278,75 @@ unsigned int kheap_virtual_address(unsigned int physical_address)
 //	A call with virtual_address = null is equivalent to kmalloc().
 //	A call with new_size = zero is equivalent to kfree().
 
-void *krealloc(void *virtual_address, uint32 new_size)
+void *krealloc(void *va, uint32 new_size)
 {
 	// TODO: [PROJECT'24.MS2 - BONUS#1] [1] KERNEL HEAP - krealloc
 	//  Write your code here, remove the panic and write your code
 	return NULL;
-	panic("krealloc() is not implemented yet...!!");
+//	panic("krealloc() is not implemented yet...!!");
+	void *ptr = NULL;
+	if(va == NULL){
+		ptr = kmalloc(new_size);
+	} else if(new_size == 0){
+		kfree(va);
+	}else{
+		uint32 pageA_start = hard_limit + PAGE_SIZE;
+		if((uint32)va < hard_limit){
+			ptr = realloc_block_FF(va, new_size);
+		} else if((uint32)va >= pageA_start && (uint32)va < KERNEL_HEAP_MAX){
+			uint32 num_pages = ROUNDUP(new_size ,PAGE_SIZE) / PAGE_SIZE;
+			uint32 num_old_pages = no_pages_alloc[(uint32)va / PAGE_SIZE];
+			if(num_pages <= num_old_pages){
+				if (new_size <= DYN_ALLOC_MAX_BLOCK_SIZE)
+				{
+					if (isKHeapPlacementStrategyFIRSTFIT())
+						ptr = alloc_block_FF(new_size);
+					else if (isKHeapPlacementStrategyBESTFIT())
+						ptr = alloc_block_BF(new_size);
+					if(ptr != NULL) memcpy(ptr, va, new_size);
+					kfree(va);
+				} else{
+					void* va_to_free = (char*)va + (num_pages * PAGE_SIZE);
+					for(int i = 0; i < (num_old_pages - num_pages); i++){
+						uint32 pa = kheap_physical_address((uint32)va_to_free + i*PAGE_SIZE);
+						to_virtual[pa / PAGE_SIZE] = 0;
+						unmap_frame(ptr_page_directory, (uint32)va_to_free + i*PAGE_SIZE);
+					}
+					ptr = va;
+				}
+			}else{
+				uint32 j = (uint32)va + (num_old_pages * PAGE_SIZE);
+				uint32 cnt = 0;
+				bool found_free_pages = 0;
+				while(cnt < (num_pages - num_old_pages))
+				{
+					if(j >= (uint32)KERNEL_HEAP_MAX || isPageAllocated(ptr_page_directory, j)) goto sayed;
+					j += (uint32)PAGE_SIZE;
+					cnt++;
+				}
+				found_free_pages = 1;
+				for (int k = 0; k < (num_pages - num_old_pages); k++)
+				{
+					struct FrameInfo *ptr_frame_info;
+					int ret = allocate_frame(&ptr_frame_info);
+					if (ret != E_NO_MEM) map_frame(ptr_page_directory, ptr_frame_info, (uint32)va + (num_old_pages + k) * PAGE_SIZE, PERM_WRITEABLE);
+					else panic("No Memory");
+				}
+				no_pages_alloc[(uint32)va / PAGE_SIZE] = num_pages;
+				for(int i = 0; i < (num_pages - num_old_pages); i++){
+					uint32 pa = kheap_physical_address((uint32)va + (num_old_pages + i) * PAGE_SIZE);
+					to_virtual[pa / PAGE_SIZE] = (uint32)va + (num_old_pages + i) * PAGE_SIZE;
+				}
+				sayed:
+					if(!found_free_pages){
+						ptr = kmalloc(new_size);
+						if(ptr != NULL) memcpy(ptr, va, new_size);
+						kfree(va);
+					}
+			}
+		} else{
+			panic("krealloc: The virtual Address is invalid");
+		}
+	}
+	return ptr;
 }
