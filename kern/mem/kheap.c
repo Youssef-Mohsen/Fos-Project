@@ -125,7 +125,7 @@ void *kmalloc(unsigned int size)
 	// use "isKHeapPlacementStrategyFIRSTFIT() ..." functions to check the current strategy
 
 	uint32 num_pages = ROUNDUP(size ,PAGE_SIZE) / PAGE_SIZE;
-	uint32 max_no_of_pages = ROUNDUP((uint32)KERNEL_HEAP_MAX - hard_limit + (uint32)PAGE_SIZE ,PAGE_SIZE) / PAGE_SIZE;
+	uint32 max_no_of_pages = ROUNDDOWN((uint32)KERNEL_HEAP_MAX - (hard_limit + (uint32)PAGE_SIZE),PAGE_SIZE) / PAGE_SIZE;
 
 	void *ptr = NULL;
 	if (size <= DYN_ALLOC_MAX_BLOCK_SIZE)
@@ -135,7 +135,7 @@ void *kmalloc(unsigned int size)
 		else if (isKHeapPlacementStrategyBESTFIT())
 			ptr = alloc_block_BF(size);
 	}
-	else if(num_pages < max_no_of_pages - 1) // the else statement in kern/mem/kheap.c/kmalloc is wrong, rewrite it to be correct.
+	else if(num_pages <= max_no_of_pages) // (-1) the else statement in kern/mem/kheap.c/kmalloc is wrong, rewrite it to be correct.
 	{
 		uint32 i = hard_limit + PAGE_SIZE; // start: hardlimit + 4  ______ end: KERNEL_HEAP_MAX
 		bool ok = 0;

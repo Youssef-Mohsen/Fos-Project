@@ -865,23 +865,42 @@ uint32 __cur_k_stk = KERNEL_HEAP_START;
 void* create_user_kern_stack(uint32* ptr_user_page_directory)
 {
 #if USE_KHEAP
-	//TODO: [PROJECT'24.MS2 - #07] [2] FAULT HANDLER I - create_user_kern_stack
-	// Write your code here, remove the panic and write your code
-	panic("create_user_kern_stack() is not implemented yet...!!");
+//TODO: [PROJECT'24.MS2 - #07] [2] FAULT HANDLER I - create_user_kern_stack
+// Write your code here, remove the panic and write your code
+//panic("create_user_kern_stack() is not implemented yet...!!");
 
-	//allocate space for the user kernel stack.
-	//remember to leave its bottom page as a GUARD PAGE (i.e. not mapped)
-	//return a pointer to the start of the allocated space (including the GUARD PAGE)
-	//On failure: panic
+//allocate space for the user kernel stack.
+//remember to leave its bottom page as a GUARD PAGE (i.e. not mapped)
+//return a pointer to the start of the allocated space (including the GUARD PAGE)
+//On failure: panic
+/*
+for (int i=1;i<=num_pages;i++)
+{
+struct FrameInfo * ptr_FrameInfo;
+int ret = allocate_frame(&ptr_FrameInfo);
+if (ret == E_NO_MEM)
+{
+panic("ERROR in create_user_kern_stack: no enough memory\n");
+}
 
+map_frame(ptr_user_page_directory, ptr_FrameInfo, ((uint32)KERNEL_HEAP_MAX)-i*PAGE_SIZE, PERM_PRESENT);
+
+}
+*/
+
+	void* ret = kmalloc(KERNEL_STACK_SIZE);
+	if (ret==NULL) panic("create_user_kern_stack() failed");
+	pt_set_page_permissions(ptr_user_page_directory,(uint32)ret,0,PERM_PRESENT);
+	cprintf("yay create_user_kern_stack() is done\n");
+	return ret;
 
 #else
-	if (KERNEL_HEAP_MAX - __cur_k_stk < KERNEL_STACK_SIZE)
-		panic("Run out of kernel heap!! Unable to create a kernel stack for the process. Can't create more processes!");
-	void* kstack = (void*) __cur_k_stk;
-	__cur_k_stk += KERNEL_STACK_SIZE;
-	return kstack ;
-//	panic("KERNEL HEAP is OFF! user kernel stack is not supported");
+if (KERNEL_HEAP_MAX - __cur_k_stk < KERNEL_STACK_SIZE)
+panic("Run out of kernel heap!! Unable to create a kernel stack for the process. Can't create more processes!");
+void* kstack = (void*) __cur_k_stk;
+__cur_k_stk += KERNEL_STACK_SIZE;
+return kstack ;
+//panic("KERNEL HEAP is OFF! user kernel stack is not supported");
 #endif
 }
 
@@ -912,6 +931,11 @@ void initialize_uheap_dynamic_allocator(struct Env* e, uint32 daStart, uint32 da
 	//	1) there's no initial allocations for the dynamic allocator of the user heap (=0)
 	//	2) call the initialize_dynamic_allocator(..) to complete the initialization
 	//panic("initialize_uheap_dynamic_allocator() is not implemented yet...!!");
+	e->heap_start = daStart;
+	e->heap_hard_limit = daLimit;
+	e->heap_brk = daStart;
+
+	initialize_dynamic_allocator(daStart,0);
 }
 
 //==============================================================
