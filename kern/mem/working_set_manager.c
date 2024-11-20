@@ -19,8 +19,34 @@ inline struct WorkingSetElement* env_page_ws_list_create_element(struct Env* e, 
 	//TODO: [PROJECT'24.MS2 - #07] [2] FAULT HANDLER I - Create a new WS element
 	//If failed to create a new one, kernel should panic()!
 	//COMMENT THE FOLLOWING LINE BEFORE START CODING
-	panic("env_page_ws_list_create_element is not implemented yet");
+	//panic("env_page_ws_list_create_element is not implemented yet");
 	//Your Code is Here...
+	/*
+	struct FrameInfo * ptr_FrameInfo;
+	int ret = allocate_frame(&ptr_FrameInfo);
+	if (ret == E_NO_MEM)
+	{
+		panic("ERROR in create_user_kern_stack: no enough memory\n");
+	}
+
+	map_frame(ptr_page_directory, ptr_FrameInfo, virtual_address, PERM_PRESENT);
+
+	struct WorkingSetElement* element=(struct WorkingSetElement*)ptr_FrameInfo;
+
+	element->virtual_address=virtual_address;
+
+	if (element ==NULL){
+		panic("env_page_ws_list_create_element() paniced");
+	}
+	else{
+	return element;
+	}
+	*/
+	void* retK = kmalloc(sizeof(struct WorkingSetElement));
+	if (retK==NULL) panic("env_page_ws_list_create_element failed no mem");
+	struct WorkingSetElement* element =(struct WorkingSetElement*)retK;
+	element->virtual_address=virtual_address;
+	return element;
 
 }
 inline void env_page_ws_invalidate(struct Env* e, uint32 virtual_address)

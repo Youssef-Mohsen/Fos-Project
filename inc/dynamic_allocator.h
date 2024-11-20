@@ -33,7 +33,8 @@ struct Block_Start_End
 {
 	uint32 info;
 };// __attribute__((packed))
-
+uint32 end_add;
+struct Block_Start_End* end_block;
 struct BlockElement
 {
 	LIST_ENTRY(BlockElement) prev_next_info;	/* linked list links */
