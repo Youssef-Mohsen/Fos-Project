@@ -96,6 +96,7 @@ struct Context {
 };
 
 struct Env {
+
 	//================
 	/*MAIN INFO...*/
 	//================
@@ -121,7 +122,9 @@ struct Env {
 
 	//=======================================================================
 	//TODO: [PROJECT'24.MS2 - #10] [3] USER HEAP - add suitable code here
-
+	uint32 heap_start;
+	uint32 heap_hard_limit;
+	uint32 heap_brk;
 	//=======================================================================
 	//for page file management
 	uint32* disk_env_pgdir;

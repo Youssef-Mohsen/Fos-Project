@@ -1,3 +1,4 @@
+
 /*
  * chunk_operations.c
  *
@@ -139,10 +140,25 @@ void* sys_sbrk(int numOfPages)
 	//TODO: [PROJECT'24.MS2 - #11] [3] USER HEAP - sys_sbrk
 	/*====================================*/
 	/*Remove this line before start coding*/
-	return (void*)-1 ;
+//	return (void*)-1 ;
 	/*====================================*/
 	struct Env* env = get_cpu_proc(); //the current running Environment to adjust its break limit
+	if(numOfPages > 0)
+	{
+		uint32 size = numOfPages * PAGE_SIZE;
+		uint32 prev_brk = env->heap_brk;
+		if(env->heap_brk + size > env->heap_hard_limit || LIST_SIZE(&MemFrameLists.free_frame_list) < 1) return (void *)-1;
+		allocate_user_mem(env, prev_brk, size);
+		env->heap_brk += size;
+		return (void *)prev_brk;
 
+	}
+	else if(numOfPages == 0)
+	{
+		return (void *) env->heap_brk;
+	}
+
+	return (void *)-1;
 
 }
 
@@ -159,7 +175,18 @@ void allocate_user_mem(struct Env* e, uint32 virtual_address, uint32 size)
 
 	//TODO: [PROJECT'24.MS2 - #13] [3] USER HEAP [KERNEL SIDE] - allocate_user_mem()
 	// Write your code here, remove the panic and write your code
-	panic("allocate_user_mem() is not implemented yet...!!");
+//	panic("allocate_user_mem() is not implemented yet...!!");
+	uint32 no_of_pages = ROUNDUP(size, PAGE_SIZE) / PAGE_SIZE;
+	for(int i = 0; i < no_of_pages; i++){
+		uint32* ptr_table;
+		int ret = get_page_table(e->env_page_directory,(i*PAGE_SIZE)+virtual_address,&ptr_table);
+		if(ret == TABLE_NOT_EXIST)
+		{
+			ptr_table = create_page_table(e->env_page_directory,(i*PAGE_SIZE)+virtual_address);
+		}
+		pt_set_page_permissions(e->env_page_directory,(i*PAGE_SIZE)+virtual_address,PERM_MARKED,0);
+	}
+
 }
 
 //=====================================
@@ -175,10 +202,17 @@ void free_user_mem(struct Env* e, uint32 virtual_address, uint32 size)
 
 	//TODO: [PROJECT'24.MS2 - #15] [3] USER HEAP [KERNEL SIDE] - free_user_mem
 	// Write your code here, remove the panic and write your code
-	panic("free_user_mem() is not implemented yet...!!");
-
-
+//	panic("free_user_mem() is not implemented yet...!!");
 	//TODO: [PROJECT'24.MS2 - BONUS#3] [3] USER HEAP [KERNEL SIDE] - O(1) free_user_mem
+	uint32 no_of_pages = ROUNDUP(size, PAGE_SIZE) / PAGE_SIZE;
+		for(int i = 0; i < no_of_pages; i++){
+			pt_set_page_permissions(e->env_page_directory,(i*PAGE_SIZE)+virtual_address,0,PERM_MARKED);
+			int ret = pf_read_env_page(e,(void*)((i*PAGE_SIZE)+virtual_address));
+			if(ret == E_PAGE_NOT_EXIST_IN_PF) env_page_ws_invalidate(e, (i*PAGE_SIZE)+virtual_address);
+			else pf_remove_env_page(e, (i*PAGE_SIZE)+virtual_address);
+
+
+		}
 }
 
 //=====================================

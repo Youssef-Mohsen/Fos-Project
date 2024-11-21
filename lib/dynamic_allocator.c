@@ -112,7 +112,7 @@ void initialize_dynamic_allocator(uint32 daStart, uint32 initSizeOfAllocatedSpac
     // Check for bounds
     if ((daStart + initSizeOfAllocatedSpace) > KERNEL_HEAP_MAX)
         return;
-    if(daStart < KERNEL_HEAP_START)
+    if(daStart < USER_HEAP_START)
         return;
     end_add = daStart + initSizeOfAllocatedSpace - sizeof(struct Block_Start_End);
      struct BlockElement * element = NULL;
@@ -142,7 +142,6 @@ void initialize_dynamic_allocator(uint32 daStart, uint32 initSizeOfAllocatedSpac
 
     // Link the first free block into the free block list
     LIST_INSERT_HEAD(&freeBlocksList , first_free_block);
-    print_blocks_list(freeBlocksList);
 }
 
 
@@ -235,7 +234,6 @@ void *alloc_block_FF(uint32 size)
 	            return va;
 	        }
 	    }
-
 	    uint32 required_size = size + 2 * sizeof(uint32);
 	    void *new_mem = sbrk(ROUNDUP(required_size, PAGE_SIZE) / PAGE_SIZE);
 		if (new_mem == (void *)-1) {
@@ -358,7 +356,7 @@ void *alloc_block_BF(uint32 size)
 			cprintf("address : %x\n",new_mem);
 			set_block_data(new_mem, ROUNDUP(required_size, PAGE_SIZE), 1);
 			free_block(new_mem);
-			return alloc_block_FF(size);
+			return alloc_block_BF(size);
 			}
 			return new_mem;
 }

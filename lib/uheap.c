@@ -1,5 +1,6 @@
-#include <inc/lib.h>
 
+#include <inc/lib.h>
+#define UHEAP_PAGE_INDEX(va) (va - myEnv->heap_hard_limit - PAGE_SIZE) / PAGE_SIZE
 //==================================================================================//
 //============================ REQUIRED FUNCTIONS ==================================//
 //==================================================================================//
@@ -12,10 +13,17 @@ void* sbrk(int increment)
 {
 	return (void*) sys_sbrk(increment);
 }
-
+uint32 no_pages_marked[NUM_OF_UHEAP_PAGES];
+bool isPageMarked[NUM_OF_UHEAP_PAGES];
 //=================================
 // [2] ALLOCATE SPACE IN USER HEAP:
 //=================================
+/*bool isPageMarked(uint32* ptr_page_directory,const uint32 virtual_address)
+{
+	if(pt_get_page_permissions(ptr_page_directory,virtual_address) & PERM_AVAILABLE)return 1;
+	//if(virtual_address&PERM_AVAILABLE) return 1;
+	return 0;
+}*/
 void* malloc(uint32 size)
 {
 	//==============================================================
@@ -24,21 +32,103 @@ void* malloc(uint32 size)
 	//==============================================================
 	//TODO: [PROJECT'24.MS2 - #12] [3] USER HEAP [USER SIDE] - malloc()
 	// Write your code here, remove the panic and write your code
-	panic("malloc() is not implemented yet...!!");
-	return NULL;
+//	panic("malloc() is not implemented yet...!!");
+//	return NULL;
 	//Use sys_isUHeapPlacementStrategyFIRSTFIT() and	sys_isUHeapPlacementStrategyBESTFIT()
 	//to check the current strategy
+	uint32 num_pages = ROUNDUP(size ,PAGE_SIZE) / PAGE_SIZE;
+	uint32 max_no_of_pages = ROUNDDOWN((uint32)USER_HEAP_MAX - (myEnv->heap_hard_limit + (uint32)PAGE_SIZE) ,PAGE_SIZE) / PAGE_SIZE;
+	void *ptr = NULL;
+	if (size <= DYN_ALLOC_MAX_BLOCK_SIZE)
+	{
+		if (sys_isUHeapPlacementStrategyFIRSTFIT())
+		{
+			//cprintf("47\n");
+			ptr = alloc_block_FF(size);
+		}
+		else if (sys_isUHeapPlacementStrategyBESTFIT())
+			ptr = alloc_block_BF(size);
+	}
+	else if(num_pages < max_no_of_pages-1) // the else statement in kern/mem/kheap.c/kmalloc is wrong, rewrite it to be correct.
+	{
+		//cprintf("52\n");
+		uint32 i = myEnv->heap_hard_limit + PAGE_SIZE;											// start: hardlimit + 4  ______ end: KERNEL_HEAP_MAX
+		bool ok = 0;
+		while (i < (uint32)USER_HEAP_MAX)
+		{
+			//cprintf("57\n");
+			if (!isPageMarked[UHEAP_PAGE_INDEX(i)])
+			{
+				//cprintf("60\n");
+				uint32 j = i + (uint32)PAGE_SIZE;
+				uint32 cnt = 0;
 
+				//cprintf("64\n");
+				while(cnt < num_pages - 1)
+				{
+					if(j >= (uint32)USER_HEAP_MAX) return NULL;
+					if (isPageMarked[UHEAP_PAGE_INDEX(j)])
+					{
+						//cprintf("71\n");
+						i = j;
+						goto sayed;
+					}
+
+					j += (uint32)PAGE_SIZE; // <-- changed, was j ++
+
+					cnt++;
+				}
+				ok = 1;
+				for(int k = 0;k<num_pages;k++)
+				{
+					isPageMarked[UHEAP_PAGE_INDEX((k*PAGE_SIZE)+i)]=1;
+				}
+				//cprintf("79\n");
+
+			}
+			sayed:
+			if(ok) break;
+			i += (uint32)PAGE_SIZE;
+		}
+
+		if(!ok) return NULL;
+		ptr = (void*)i;
+		no_pages_marked[UHEAP_PAGE_INDEX(i)] = num_pages;
+		sys_allocate_user_mem(i, size);
+		//cprintf("91\n");
+	}
+	else
+	{
+		return NULL;
+	}
+	return ptr;
 }
 
 //=================================
 // [3] FREE SPACE FROM USER HEAP:
 //=================================
-void free(void* virtual_address)
+void free(void* va)
 {
 	//TODO: [PROJECT'24.MS2 - #14] [3] USER HEAP [USER SIDE] - free()
 	// Write your code here, remove the panic and write your code
-	panic("free() is not implemented yet...!!");
+//	panic("free() is not implemented yet...!!");
+	//what's the hard_limit of user heap
+	uint32 pageA_start = myEnv->heap_hard_limit + PAGE_SIZE;
+	uint32 size = 0;
+	if((uint32)va < myEnv->heap_hard_limit){
+		size = get_block_size(va);
+		free_block(va);
+	} else if((uint32)va >= pageA_start && (uint32)va < USER_HEAP_MAX){
+		uint32 no_of_pages = no_pages_marked[UHEAP_PAGE_INDEX((uint32)va)];
+		size = no_of_pages * PAGE_SIZE;
+		for(int k = 0;k<no_of_pages;k++)
+		{
+			isPageMarked[UHEAP_PAGE_INDEX((k*PAGE_SIZE)+(uint32)va)]=0;
+		}
+		sys_free_user_mem((uint32)va, size);
+	} else{
+		panic("User free: The virtual Address is invalid");
+	}
 }
 
 
