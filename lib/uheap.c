@@ -28,6 +28,7 @@ void* malloc(uint32 size)
 //	return NULL;
 	//Use sys_isUHeapPlacementStrategyFIRSTFIT() and	sys_isUHeapPlacementStrategyBESTFIT()
 	//to check the current strategy
+	cprintf("malloc:: size: %d\n", size);
 	uint32 num_pages = ROUNDUP(size ,PAGE_SIZE) / PAGE_SIZE;
 	uint32 max_no_of_pages = ROUNDDOWN((uint32)USER_HEAP_MAX - (myEnv->heap_hard_limit + (uint32)PAGE_SIZE) ,PAGE_SIZE) / PAGE_SIZE;
 
@@ -45,8 +46,10 @@ void* malloc(uint32 size)
 		bool ok = 0;
 		while (i < (uint32)USER_HEAP_MAX)
 		{
+			cprintf("49\n");
 			if (!myEnv->isPageMarked[i / PAGE_SIZE])
 			{
+				cprintf("52\n");
 				uint32 j = i + (uint32)PAGE_SIZE;
 				uint32 cnt = 0;
 				while(cnt < num_pages - 1)
@@ -78,6 +81,7 @@ void* malloc(uint32 size)
 	{
 		return NULL;
 	}
+	cprintf("malloc:: va: %x", ptr);
 	return ptr;
 }
 

@@ -873,26 +873,20 @@ void* create_user_kern_stack(uint32* ptr_user_page_directory)
 //remember to leave its bottom page as a GUARD PAGE (i.e. not mapped)
 //return a pointer to the start of the allocated space (including the GUARD PAGE)
 //On failure: panic
-/*
-for (int i=1;i<=num_pages;i++)
-{
-struct FrameInfo * ptr_FrameInfo;
-int ret = allocate_frame(&ptr_FrameInfo);
-if (ret == E_NO_MEM)
-{
-panic("ERROR in create_user_kern_stack: no enough memory\n");
-}
-
-map_frame(ptr_user_page_directory, ptr_FrameInfo, ((uint32)KERNEL_HEAP_MAX)-i*PAGE_SIZE, PERM_PRESENT);
-
-}
-*/
-
-	void* ret = kmalloc(KERNEL_STACK_SIZE);
-	if (ret==NULL) panic("create_user_kern_stack() failed");
-	pt_set_page_permissions(ptr_user_page_directory,(uint32)ret,0,PERM_PRESENT);
+//	cprintf("876\n");
+	uint32* va = kmalloc(KERNEL_STACK_SIZE); //takes free space address
+	uint32 num_pages = ROUNDUP(KERNEL_STACK_SIZE, PAGE_SIZE) / PAGE_SIZE;
+	for (int i=1; i<num_pages; i++)
+	{
+		uint32* ptr_page_table = NULL;
+		struct FrameInfo * ptr_FrameInfo = get_frame_info(ptr_page_directory, (uint32)va + i*PAGE_SIZE, &ptr_page_table);
+		map_frame(ptr_user_page_directory, ptr_FrameInfo, (uint32)va + i*PAGE_SIZE, PERM_PRESENT);
+		if(i == 0){
+			pt_set_page_permissions(ptr_user_page_directory, (uint32)va + i*PAGE_SIZE, 0, PERM_PRESENT);
+		}
+	}
 	cprintf("yay create_user_kern_stack() is done\n");
-	return ret;
+	return va;
 
 #else
 if (KERNEL_HEAP_MAX - __cur_k_stk < KERNEL_STACK_SIZE)
@@ -931,9 +925,20 @@ void initialize_uheap_dynamic_allocator(struct Env* e, uint32 daStart, uint32 da
 	//	1) there's no initial allocations for the dynamic allocator of the user heap (=0)
 	//	2) call the initialize_dynamic_allocator(..) to complete the initialization
 	//panic("initialize_uheap_dynamic_allocator() is not implemented yet...!!");
+	cprintf("initialize User heap\n");
 	e->heap_start = daStart;
 	e->heap_hard_limit = daLimit;
 	e->heap_brk = daStart;
+
+//	uint32 size = sizeof(uint32) * NUM_OF_UHEAP_PAGES;
+//	uint32 num_pages = ROUNDUP(size, PAGE_SIZE) / PAGE_SIZE;
+//	uint32* va = kmalloc(size);
+//	e->isPageMarked = va;
+//	for(int i = 0; i < num_pages; i++){
+//		uint32* ptr_page_table = NULL;
+//		struct FrameInfo * ptr_FrameInfo = get_frame_info(ptr_page_directory, (uint32)va + i*PAGE_SIZE, &ptr_page_table);
+//		map_frame(e->env_page_directory, ptr_FrameInfo, (uint32)va + i*PAGE_SIZE, PERM_PRESENT);
+//	}
 
 	initialize_dynamic_allocator(daStart,0);
 }

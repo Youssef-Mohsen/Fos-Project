@@ -177,8 +177,11 @@ void allocate_user_mem(struct Env* e, uint32 virtual_address, uint32 size)
 	//TODO: [PROJECT'24.MS2 - #13] [3] USER HEAP [KERNEL SIDE] - allocate_user_mem()
 	// Write your code here, remove the panic and write your code
 //	panic("allocate_user_mem() is not implemented yet...!!");
+	cprintf("alloc:: va: %x", virtual_address);
+	cprintf("size: %d", size);
 	uint32 no_of_pages = ROUNDUP(size, PAGE_SIZE) / PAGE_SIZE;
 	for(int i = 0; i < no_of_pages; i++){
+		pt_set_page_permissions(e->env_page_directory, (uint32)virtual_address + i*PAGE_SIZE, PERM_AVAILABLE, 0);
 		e->isPageMarked[virtual_address / PAGE_SIZE] = 1;
 	}
 }
@@ -196,11 +199,15 @@ void free_user_mem(struct Env* e, uint32 virtual_address, uint32 size)
 
 	//TODO: [PROJECT'24.MS2 - #15] [3] USER HEAP [KERNEL SIDE] - free_user_mem
 	// Write your code here, remove the panic and write your code
-//	panic("free_user_mem() is not implemented yet...!!");
+	panic("free_user_mem() is not implemented yet...!!");
 
 
 	//TODO: [PROJECT'24.MS2 - BONUS#3] [3] USER HEAP [KERNEL SIDE] - O(1) free_user_mem
-	e->isPageMarked[virtual_address/PAGE_SIZE] = 0;
+	uint32 no_of_pages = ROUNDUP(size, PAGE_SIZE) / PAGE_SIZE;
+	for(int i = 0; i < no_of_pages; i++){
+		pt_set_page_permissions(e->env_page_directory, (uint32)virtual_address + i*PAGE_SIZE, 0, PERM_AVAILABLE);
+//		e->isPageMarked[virtual_address / PAGE_SIZE] = 1;
+	}
 
 }
 

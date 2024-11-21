@@ -41,9 +41,10 @@ inline struct WorkingSetElement* env_page_ws_list_create_element(struct Env* e, 
 	else{
 	return element;
 	}
-	*/
+//	*/
 	void* retK = kmalloc(sizeof(struct WorkingSetElement));
 	if (retK==NULL) panic("env_page_ws_list_create_element failed no mem");
+//	cprintf("47\n");
 	struct WorkingSetElement* element =(struct WorkingSetElement*)retK;
 	element->virtual_address=virtual_address;
 	cprintf("yay env_page_ws_list_create_element() is done\n");

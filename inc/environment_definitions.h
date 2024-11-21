@@ -96,7 +96,7 @@ struct Context {
 };
 
 struct Env {
-	bool isPageMarked[NUM_OF_UHEAP_PAGES];
+	uint32* isPageMarked;
 	uint32 heap_start;
 	uint32 heap_hard_limit;
 	uint32 heap_brk;
