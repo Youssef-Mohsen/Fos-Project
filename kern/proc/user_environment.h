@@ -9,7 +9,6 @@
 #include <kern/cpu/sched_helpers.h>
 #include <kern/conc/spinlock.h>
 
-
 //========================================================
 extern struct UserProgramInfo* ptr_UserPrograms;
 extern struct Env *envs;		// All environments

@@ -26,7 +26,11 @@ inline struct WorkingSetElement* env_page_ws_list_create_element(struct Env* e, 
 	int ret = allocate_frame(&ptr_FrameInfo);
 	if (ret == E_NO_MEM)
 	{
+<<<<<<< HEAD
 		panic("ERROR in create_user_kern_stack: no enough memory\n");
+=======
+	panic("ERROR in create_user_kern_stack: no enough memory\n");
+>>>>>>> origin/Mo7sen
 	}
 
 	map_frame(ptr_page_directory, ptr_FrameInfo, virtual_address, PERM_PRESENT);
@@ -36,7 +40,7 @@ inline struct WorkingSetElement* env_page_ws_list_create_element(struct Env* e, 
 	element->virtual_address=virtual_address;
 
 	if (element ==NULL){
-		panic("env_page_ws_list_create_element() paniced");
+	panic("env_page_ws_list_create_element() paniced");
 	}
 	else{
 	return element;
@@ -46,6 +50,7 @@ inline struct WorkingSetElement* env_page_ws_list_create_element(struct Env* e, 
 	if (retK==NULL) panic("env_page_ws_list_create_element failed no mem");
 	struct WorkingSetElement* element =(struct WorkingSetElement*)retK;
 	element->virtual_address=virtual_address;
+	cprintf("yay env_page_ws_list_create_element() is done\n");
 	return element;
 
 }
