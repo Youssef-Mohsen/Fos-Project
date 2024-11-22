@@ -1,3 +1,4 @@
+
 /*
  * fault_handler.c
  *
@@ -151,23 +152,18 @@ void fault_handler(struct Trapframe *tf)
 			//TODO: [PROJECT'24.MS2 - #08] [2] FAULT HANDLER I - Check for invalid pointers
 			//(e.g. pointing to unmarked user heap page, kernel or wrong access rights),
 			//your code is here
-			cprintf("154\n");
 			if (fault_va >= USER_LIMIT)
 			{
-				cprintf("\nexit 1\n");
 				env_exit();
 			}
-			else if((pt_get_page_permissions(faulted_env->env_page_directory,fault_va) & PERM_AVAILABLE) == PERM_AVAILABLE)
+			else if(((pt_get_page_permissions(faulted_env->env_page_directory,fault_va) & PERM_MARKED) != PERM_MARKED) && (fault_va>=USER_HEAP_START && fault_va<=USER_HEAP_MAX))
 			{
-				cprintf("\nexit 2\n");
-				env_exit();
+			env_exit();
 			}
-			else if ((pt_get_page_permissions(faulted_env->env_page_directory,fault_va) & PERM_PRESENT) != PERM_PRESENT && (pt_get_page_permissions(faulted_env->env_page_directory,fault_va) & PERM_WRITEABLE) == PERM_WRITEABLE)
+			else if ((pt_get_page_permissions(faulted_env->env_page_directory,fault_va) & PERM_PRESENT) && (pt_get_page_permissions(faulted_env->env_page_directory,fault_va) & PERM_WRITEABLE) != PERM_WRITEABLE)
 			{
-				cprintf("\nexit 3\n");
 				env_exit();
 			}
-			cprintf("Valid fault_handler()\n");
 			/*============================================================================================*/
 		}
 
@@ -245,15 +241,12 @@ void page_fault_handler(struct Env * faulted_env, uint32 fault_va)
 		// Write your code here, remove the panic and write your code
 		//panic("page_fault_handler().PLACEMENT is not implemented yet...!!");
 		//refer to the project presentation and documentation for details
-
-		cprintf("VA:%x\n", fault_va);
 		int ret = pf_read_env_page(faulted_env,(void*)fault_va);
 
 		if (ret == E_PAGE_NOT_EXIST_IN_PF)
 		{
 			if (!( (USER_HEAP_START <= fault_va && fault_va < USER_HEAP_MAX) || (USTACKBOTTOM <= fault_va && fault_va < USTACKTOP) ) )
 			{
-				cprintf("exit 4\n");
 				env_exit();
 			}
 		}
@@ -264,8 +257,6 @@ void page_fault_handler(struct Env * faulted_env, uint32 fault_va)
 		{
 			map_frame(faulted_env->env_page_directory,ptr_frame,fault_va, PERM_USER | PERM_WRITEABLE);
 		} else panic("Placement: no memory");
-
-		cprintf("skip\n");
 		struct WorkingSetElement* wse = env_page_ws_list_create_element(faulted_env, fault_va);
 		LIST_INSERT_TAIL(&(faulted_env->page_WS_list), wse);
 		if (LIST_SIZE(&(faulted_env->page_WS_list)) == faulted_env->page_WS_max_size)
@@ -276,7 +267,6 @@ void page_fault_handler(struct Env * faulted_env, uint32 fault_va)
 		{
 			faulted_env->page_last_WS_element = NULL;
 		}
-		cprintf("yay page_fault_handler() is done\n");
 	}
 	else
 	{

@@ -21,33 +21,13 @@ inline struct WorkingSetElement* env_page_ws_list_create_element(struct Env* e, 
 	//COMMENT THE FOLLOWING LINE BEFORE START CODING
 	//panic("env_page_ws_list_create_element is not implemented yet");
 	//Your Code is Here...
-	/*
-	struct FrameInfo * ptr_FrameInfo;
-	int ret = allocate_frame(&ptr_FrameInfo);
-	if (ret == E_NO_MEM)
-	{
-	panic("ERROR in create_user_kern_stack: no enough memory\n");
-	}
-
-	map_frame(ptr_page_directory, ptr_FrameInfo, virtual_address, PERM_PRESENT);
-
-	struct WorkingSetElement* element=(struct WorkingSetElement*)ptr_FrameInfo;
-
-	element->virtual_address=virtual_address;
-
-	if (element ==NULL){
-	panic("env_page_ws_list_create_element() paniced");
-	}
-	else{
-	return element;
-	}
-//	*/
 	void* retK = kmalloc(sizeof(struct WorkingSetElement));
 	if (retK==NULL) panic("env_page_ws_list_create_element failed no mem");
-//	cprintf("47\n");
 	struct WorkingSetElement* element =(struct WorkingSetElement*)retK;
-	element->virtual_address=virtual_address;
-	cprintf("yay env_page_ws_list_create_element() is done\n");
+	element->virtual_address=ROUNDDOWN(virtual_address,PAGE_SIZE);
+	element->empty=0;
+	element->time_stamp=0;
+	element->sweeps_counter=0;
 	return element;
 
 }

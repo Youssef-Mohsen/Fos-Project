@@ -4,6 +4,7 @@
 #include <inc/dynamic_allocator.h>
 #include "memory_manager.h"
 
+#define KHEAP_PAGE_INDEX(va) (va - hard_limit - PAGE_SIZE) / PAGE_SIZE
 //Initialize the dynamic allocator of kernel heap with the given start address, size & limit
 //All pages in the given range should be allocated
 //Remember: call the initialize_dynamic_allocator(..) to complete the initialization
@@ -26,9 +27,6 @@ int initialize_kheap_dynamic_allocator(uint32 daStart, uint32 initSizeToAllocate
 
 	 struct FrameInfo * start_block_area = (struct FrameInfo*) KERNEL_HEAP_START;
 	 struct FrameInfo * end_block_area = (struct FrameInfo*) daLimit;
-
-	 /*struct FrameInfo * start_page_area = (struct FrameInfo*) (daLimit + PAGE_SIZE);
-	 struct FrameInfo * end_page_area = (struct FrameInfo*) KERNEL_HEAP_MAX;*/
 
 	 uint32 page_area_size = initSizeToAllocate;
 	 uint32 no_pages = page_area_size / (uint32)PAGE_SIZE;
@@ -177,7 +175,7 @@ void *kmalloc(unsigned int size)
 			//map_frame(ptr_page_directory, ptr_frame_info, i + k * 1024, PERM_USER|PERM_WRITEABLE); REPLACED BY
 			if (ret != E_NO_MEM)
 			{
-				map_frame(ptr_page_directory, ptr_frame_info, i + k * PAGE_SIZE, PERM_PRESENT | PERM_WRITEABLE); // a3raf el page mnen
+				map_frame(ptr_page_directory, ptr_frame_info, i + k * PAGE_SIZE,PERM_WRITEABLE); // a3raf el page mnen
 			}
 			else
 			{
@@ -186,7 +184,7 @@ void *kmalloc(unsigned int size)
 		}
 		ptr = (void*)i;
 
-		no_pages_alloc[i / PAGE_SIZE] = num_pages;
+		no_pages_alloc[KHEAP_PAGE_INDEX(i)] = num_pages;
 
 		for(int i = 0; i < num_pages; i++){
 			uint32 pa = kheap_physical_address((uint32)ptr + i * PAGE_SIZE);
@@ -213,7 +211,7 @@ void kfree(void *va)
     if((uint32)va < hard_limit){
         free_block(va);
     } else if((uint32)va >= pageA_start && (uint32)va < KERNEL_HEAP_MAX){
-    	uint32 no_of_pages = no_pages_alloc[(uint32)va / PAGE_SIZE];
+    	uint32 no_of_pages = no_pages_alloc[KHEAP_PAGE_INDEX((uint32)va)];
 		for(int i = 0; i < no_of_pages; i++){
 			uint32 pa = kheap_physical_address((uint32)va + i*PAGE_SIZE);
 			to_virtual[pa / PAGE_SIZE] = 0;
@@ -262,7 +260,6 @@ unsigned int kheap_virtual_address(unsigned int physical_address)
 	uint32 offset = PGOFF(physical_address);
 	uint32 va = to_virtual[physical_address / PAGE_SIZE];
 	if(va) va += offset;
-
 	return va;
 }
 //=================================================================================//

@@ -1,4 +1,7 @@
+
 #include <inc/lib.h>
+#define UHEAP_PAGE_INDEX(va) (va - myEnv->heap_hard_limit - PAGE_SIZE) / PAGE_SIZE
+//#define MAX(a, b) (int)(b > a) * b + (int)(a > b) * a + (int)(a == b)(a)
 
 //==================================================================================//
 //============================ REQUIRED FUNCTIONS ==================================//
@@ -13,9 +16,16 @@ void* sbrk(int increment)
 	return (void*) sys_sbrk(increment);
 }
 uint32 no_pages_marked[NUM_OF_UHEAP_PAGES];
+bool isPageMarked[NUM_OF_UHEAP_PAGES];
 //=================================
 // [2] ALLOCATE SPACE IN USER HEAP:
 //=================================
+/*bool isPageMarked(uint32* ptr_page_directory,const uint32 virtual_address)
+{
+	if(pt_get_page_permissions(ptr_page_directory,virtual_address) & PERM_AVAILABLE)return 1;
+	//if(virtual_address&PERM_AVAILABLE) return 1;
+	return 0;
+}*/
 void* malloc(uint32 size)
 {
 	//==============================================================
@@ -28,35 +38,40 @@ void* malloc(uint32 size)
 //	return NULL;
 	//Use sys_isUHeapPlacementStrategyFIRSTFIT() and	sys_isUHeapPlacementStrategyBESTFIT()
 	//to check the current strategy
-	cprintf("malloc:: size: %d\n", size);
 	uint32 num_pages = ROUNDUP(size ,PAGE_SIZE) / PAGE_SIZE;
 	uint32 max_no_of_pages = ROUNDDOWN((uint32)USER_HEAP_MAX - (myEnv->heap_hard_limit + (uint32)PAGE_SIZE) ,PAGE_SIZE) / PAGE_SIZE;
-
 	void *ptr = NULL;
 	if (size <= DYN_ALLOC_MAX_BLOCK_SIZE)
 	{
 		if (sys_isUHeapPlacementStrategyFIRSTFIT())
+		{
+			//cprintf("47\n");
 			ptr = alloc_block_FF(size);
+		}
 		else if (sys_isUHeapPlacementStrategyBESTFIT())
 			ptr = alloc_block_BF(size);
 	}
-	else if(num_pages <= max_no_of_pages) // the else statement in kern/mem/kheap.c/kmalloc is wrong, rewrite it to be correct.
+	else if(num_pages < max_no_of_pages-1) // the else statement in kern/mem/kheap.c/kmalloc is wrong, rewrite it to be correct.
 	{
-		uint32 i = myEnv->heap_hard_limit + PAGE_SIZE; // start: hardlimit + 4  ______ end: KERNEL_HEAP_MAX
+		//cprintf("52\n");
+		uint32 i = myEnv->heap_hard_limit + PAGE_SIZE;											// start: hardlimit + 4  ______ end: KERNEL_HEAP_MAX
 		bool ok = 0;
 		while (i < (uint32)USER_HEAP_MAX)
 		{
-			cprintf("49\n");
-			if (!myEnv->isPageMarked[i / PAGE_SIZE])
+			//cprintf("57\n");
+			if (!isPageMarked[UHEAP_PAGE_INDEX(i)])
 			{
-				cprintf("52\n");
+				//cprintf("60\n");
 				uint32 j = i + (uint32)PAGE_SIZE;
 				uint32 cnt = 0;
+
+				//cprintf("64\n");
 				while(cnt < num_pages - 1)
 				{
 					if(j >= (uint32)USER_HEAP_MAX) return NULL;
-					if (!myEnv->isPageMarked[j / PAGE_SIZE])
+					if (isPageMarked[UHEAP_PAGE_INDEX(j)])
 					{
+						//cprintf("71\n");
 						i = j;
 						goto sayed;
 					}
@@ -66,6 +81,12 @@ void* malloc(uint32 size)
 					cnt++;
 				}
 				ok = 1;
+				for(int k = 0;k<num_pages;k++)
+				{
+					isPageMarked[UHEAP_PAGE_INDEX((k*PAGE_SIZE)+i)]=1;
+				}
+				//cprintf("79\n");
+
 			}
 			sayed:
 			if(ok) break;
@@ -74,14 +95,14 @@ void* malloc(uint32 size)
 
 		if(!ok) return NULL;
 		ptr = (void*)i;
-		no_pages_marked[i / PAGE_SIZE] = num_pages;
+		no_pages_marked[UHEAP_PAGE_INDEX(i)] = num_pages;
 		sys_allocate_user_mem(i, size);
+		//cprintf("91\n");
 	}
 	else
 	{
 		return NULL;
 	}
-	cprintf("malloc:: va: %x", ptr);
 	return ptr;
 }
 
@@ -100,8 +121,12 @@ void free(void* va)
 		size = get_block_size(va);
 		free_block(va);
 	} else if((uint32)va >= pageA_start && (uint32)va < USER_HEAP_MAX){
-		uint32 no_of_pages = no_pages_marked[(uint32)va / PAGE_SIZE];
+		uint32 no_of_pages = no_pages_marked[UHEAP_PAGE_INDEX((uint32)va)];
 		size = no_of_pages * PAGE_SIZE;
+		for(int k = 0;k<no_of_pages;k++)
+		{
+			isPageMarked[UHEAP_PAGE_INDEX((k*PAGE_SIZE)+(uint32)va)]=0;
+		}
 		sys_free_user_mem((uint32)va, size);
 	} else{
 		panic("User free: The virtual Address is invalid");
@@ -120,8 +145,13 @@ void* smalloc(char *sharedVarName, uint32 size, uint8 isWritable)
 	//==============================================================
 	//TODO: [PROJECT'24.MS2 - #18] [4] SHARED MEMORY [USER SIDE] - smalloc()
 	// Write your code here, remove the panic and write your code
-	panic("smalloc() is not implemented yet...!!");
-	return NULL;
+	//panic("smalloc() is not implemented yet...!!");
+	void *ptr = malloc(MAX(size,PAGE_SIZE));
+	if(ptr == NULL) return NULL;
+	 int ret = sys_createSharedObject(sharedVarName, size,  isWritable, ptr);
+	 if(ret == E_NO_SHARE || ret == E_SHARED_MEM_EXISTS) return NULL;
+	 cprintf("153\n");
+	 return ptr;
 }
 
 //========================================
