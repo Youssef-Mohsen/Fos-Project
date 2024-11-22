@@ -1,6 +1,8 @@
 
 #include <inc/lib.h>
 #define UHEAP_PAGE_INDEX(va) (va - myEnv->heap_hard_limit - PAGE_SIZE) / PAGE_SIZE
+//#define MAX(a, b) (int)(b > a) * b + (int)(a > b) * a + (int)(a == b)(a)
+
 //==================================================================================//
 //============================ REQUIRED FUNCTIONS ==================================//
 //==================================================================================//
@@ -143,8 +145,13 @@ void* smalloc(char *sharedVarName, uint32 size, uint8 isWritable)
 	//==============================================================
 	//TODO: [PROJECT'24.MS2 - #18] [4] SHARED MEMORY [USER SIDE] - smalloc()
 	// Write your code here, remove the panic and write your code
-	panic("smalloc() is not implemented yet...!!");
-	return NULL;
+	//panic("smalloc() is not implemented yet...!!");
+	void *ptr = malloc(MAX(size,PAGE_SIZE));
+	if(ptr == NULL) return NULL;
+	 int ret = sys_createSharedObject(sharedVarName, size,  isWritable, ptr);
+	 if(ret == E_NO_SHARE || ret == E_SHARED_MEM_EXISTS) return NULL;
+	 cprintf("153\n");
+	 return ptr;
 }
 
 //========================================

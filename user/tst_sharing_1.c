@@ -65,8 +65,12 @@ _main(void)
 	cprintf("STEP B: checking reading & writing... [40%]\n");
 	{
 		int i=0;
+		cprintf("68\n");
 		for(;i<PAGE_SIZE/4;i++)
 		{
+			cprintf("I: %d\n",i);
+			cprintf("X: %x\n",x);
+			cprintf("x[i]: %x\n",x[i]);
 			x[i] = -1;
 			y[i] = -1;
 		}
@@ -76,10 +80,10 @@ _main(void)
 		{
 			z[i] = -1;
 		}
-
+		cprintf("80\n");
 		if( x[0] !=  -1)  					{is_correct = 0; cprintf("Reading/Writing of shared object is failed");}
 		if( x[PAGE_SIZE/4 - 1] !=  -1)  	{is_correct = 0; cprintf("Reading/Writing of shared object is failed");}
-
+		cprintf("83\n");
 		if( y[0] !=  -1)  					{is_correct = 0; cprintf("Reading/Writing of shared object is failed");}
 		if( y[PAGE_SIZE/4 - 1] !=  -1)  	{is_correct = 0; cprintf("Reading/Writing of shared object is failed");}
 
