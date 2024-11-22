@@ -1,3 +1,4 @@
+
 /* See COPYRIGHT for copyright information. */
 
 #include <inc/x86.h>
@@ -873,26 +874,19 @@ void* create_user_kern_stack(uint32* ptr_user_page_directory)
 //remember to leave its bottom page as a GUARD PAGE (i.e. not mapped)
 //return a pointer to the start of the allocated space (including the GUARD PAGE)
 //On failure: panic
-/*
-for (int i=1;i<=num_pages;i++)
-{
-struct FrameInfo * ptr_FrameInfo;
-int ret = allocate_frame(&ptr_FrameInfo);
-if (ret == E_NO_MEM)
-{
-panic("ERROR in create_user_kern_stack: no enough memory\n");
-}
 
-map_frame(ptr_user_page_directory, ptr_FrameInfo, ((uint32)KERNEL_HEAP_MAX)-i*PAGE_SIZE, PERM_PRESENT);
-
-}
-*/
-
-	void* ret = kmalloc(KERNEL_STACK_SIZE);
-	if (ret==NULL) panic("create_user_kern_stack() failed");
-	pt_set_page_permissions(ptr_user_page_directory,(uint32)ret,0,PERM_PRESENT);
-	cprintf("yay create_user_kern_stack() is done\n");
-	return ret;
+	uint32* va = kmalloc(KERNEL_STACK_SIZE); //takes free space address
+	uint32 num_pages = ROUNDUP(KERNEL_STACK_SIZE, PAGE_SIZE) / PAGE_SIZE;
+	for (int i=1; i<num_pages; i++)
+	{
+		uint32* ptr_page_table = NULL;
+		struct FrameInfo * ptr_FrameInfo = get_frame_info(ptr_page_directory, (uint32)va + i*PAGE_SIZE, &ptr_page_table);
+		map_frame(ptr_user_page_directory, ptr_FrameInfo, (uint32)va + i*PAGE_SIZE, PERM_PRESENT);
+		if(i == 0){
+			pt_set_page_permissions(ptr_user_page_directory, (uint32)va + i*PAGE_SIZE, 0, PERM_PRESENT);
+		}
+	}
+	    return va;
 
 #else
 if (KERNEL_HEAP_MAX - __cur_k_stk < KERNEL_STACK_SIZE)
@@ -1240,5 +1234,3 @@ void cleanup_buffers(struct Env* e)
 	//	struct freeFramesCounters ffc2 = calculate_available_frames();
 	//	cprintf("[%s] aft, mod = %d, fb = %d, fnb = %d\n",curenv->prog_name, ffc2.modified, ffc2.freeBuffered, ffc2.freeNotBuffered);
 }
-
-
