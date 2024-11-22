@@ -65,12 +65,11 @@ _main(void)
 	cprintf("STEP B: checking reading & writing... [40%]\n");
 	{
 		int i=0;
-		cprintf("68\n");
 		for(;i<PAGE_SIZE/4;i++)
 		{
-			cprintf("I: %d\n",i);
+			/*cprintf("I: %d\n",i);
 			cprintf("X: %x\n",x);
-			cprintf("x[i]: %x\n",x[i]);
+			cprintf("x[i]: %x\n",x[i]);*/
 			x[i] = -1;
 			y[i] = -1;
 		}

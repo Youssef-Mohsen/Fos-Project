@@ -158,6 +158,7 @@ void fault_handler(struct Trapframe *tf)
 			}
 			else if(((pt_get_page_permissions(faulted_env->env_page_directory,fault_va) & PERM_MARKED) != PERM_MARKED) && (fault_va>=USER_HEAP_START && fault_va<=USER_HEAP_MAX))
 			{
+				cprintf("exit2\n");
 			env_exit();
 			}
 			else if ((pt_get_page_permissions(faulted_env->env_page_directory,fault_va) & PERM_PRESENT) && (pt_get_page_permissions(faulted_env->env_page_directory,fault_va) & PERM_WRITEABLE) != PERM_WRITEABLE)
