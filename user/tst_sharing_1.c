@@ -79,10 +79,10 @@ _main(void)
 		{
 			z[i] = -1;
 		}
-		cprintf("80\n");
+//		cprintf("80\n");
 		if( x[0] !=  -1)  					{is_correct = 0; cprintf("Reading/Writing of shared object is failed");}
 		if( x[PAGE_SIZE/4 - 1] !=  -1)  	{is_correct = 0; cprintf("Reading/Writing of shared object is failed");}
-		cprintf("83\n");
+//		cprintf("83\n");
 		if( y[0] !=  -1)  					{is_correct = 0; cprintf("Reading/Writing of shared object is failed");}
 		if( y[PAGE_SIZE/4 - 1] !=  -1)  	{is_correct = 0; cprintf("Reading/Writing of shared object is failed");}
 

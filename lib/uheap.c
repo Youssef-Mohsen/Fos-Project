@@ -151,7 +151,7 @@ void* smalloc(char *sharedVarName, uint32 size, uint8 isWritable)
 	if(ptr == NULL) return NULL;
 	 int ret = sys_createSharedObject(sharedVarName, size,  isWritable, ptr);
 	 if(ret == E_NO_SHARE || ret == E_SHARED_MEM_EXISTS) return NULL;
-	 cprintf("153\n");
+//	 cprintf("153\n");
 	 return ptr;
 }
 

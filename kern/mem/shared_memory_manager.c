@@ -71,10 +71,6 @@ inline struct FrameInfo** create_frames_storage(int numOfFrames)
 	struct FrameInfo** frames_storage = (struct FrameInfo**) kmalloc(numOfFrames * sizeof(struct FrameInfo*));
 	if (frames_storage==NULL) return NULL;
 
-	 // Initialize the FrameInfo struct to zero
-//	 memset(frames_storage, 0, numOfFrames * sizeof(struct FrameInfo *));
-
-
 	return frames_storage;
 }
 
@@ -163,7 +159,7 @@ int createSharedObject(int32 ownerID, char* shareName, uint32 size, uint8 isWrit
 		int ret = allocate_frame(&ptr_frame_info);
 		if (ret != E_NO_MEM)
 		{
-			cprintf("VA: %x\n",(uint32)virtual_address + (k * PAGE_SIZE));
+//			cprintf("VA: %x\n",(uint32)virtual_address + (k * PAGE_SIZE));
 			map_frame(myenv->env_page_directory, ptr_frame_info, (uint32)virtual_address + (k * PAGE_SIZE), PERM_USER | PERM_WRITEABLE);
 			created_share->framesStorage[k] = ptr_frame_info;
 		}
@@ -198,8 +194,7 @@ int getSharedObject(int32 ownerID, char* shareName, void* virtual_address)
 	uint32 numOfFrames = ROUNDUP(shared_obj->size ,PAGE_SIZE) / PAGE_SIZE;
 	for(int i = 0 ;i< numOfFrames ;i++)
 	{
-		if(shared_obj->isWritable) map_frame(myenv->env_page_directory,shared_obj->framesStorage[i], (uint32)virtual_address + (i * PAGE_SIZE), PERM_USER | PERM_WRITEABLE);
-		else map_frame(myenv->env_page_directory,shared_obj->framesStorage[i],(uint32)virtual_address + (i * PAGE_SIZE), PERM_USER);
+		map_frame(myenv->env_page_directory,shared_obj->framesStorage[i], (uint32)virtual_address + (i * PAGE_SIZE), PERM_USER | shared_obj->isWritable * PERM_WRITEABLE);
 	}
 
 	shared_obj->references++;
