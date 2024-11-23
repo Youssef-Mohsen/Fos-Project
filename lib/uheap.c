@@ -162,14 +162,12 @@ void* sget(int32 ownerEnvID, char *sharedVarName)
 	//TODO: [PROJECT'24.MS2 - #20] [4] SHARED MEMORY [USER SIDE] - sget()
 	// Write your code here, remove the panic and write your code
 	//panic("sget() is not implemented yet...!!");
-	cprintf("sget: 165\n");
 	int size = sys_getSizeOfSharedObject(ownerEnvID,sharedVarName);
 	if(size == E_SHARED_MEM_NOT_EXISTS) return NULL;
 	void * ptr = malloc(MAX(size,PAGE_SIZE));
 	if(ptr == NULL) return NULL;
 	int ret = sys_getSharedObject(ownerEnvID,sharedVarName,ptr);
 	if(ret == E_SHARED_MEM_NOT_EXISTS ) return NULL;
-	cprintf("return to sget:: 172\n");
 	return ptr;
 }
 

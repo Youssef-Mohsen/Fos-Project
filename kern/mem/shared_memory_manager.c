@@ -95,33 +95,25 @@ struct Share* create_share(int32 ownerID, char* shareName, uint32 size, uint8 is
 	//panic("create_share is not implemented yet");
 	//Your Code is Here...
 	uint32 numOfFrames = ROUNDUP(size ,PAGE_SIZE) / PAGE_SIZE;
-	struct Share* created_share = kmalloc(MAX(size, PAGE_SIZE));
-	if(created_share==NULL)
-	{
-		kfree((void*)created_share);
-		return NULL;
-	}
+	struct Share* created_share = kmalloc(sizeof(struct Share*));
 
-	created_share->references = 1;
-	created_share->ID = (int32)(((int)created_share << 1) >> 1); //mask
+	created_share->references=1;
+	created_share->ID=(int32)((int)created_share & 0x7FFFFFFF); //mask
 	created_share->framesStorage = create_frames_storage(numOfFrames);
-	if(created_share->framesStorage==NULL) return NULL;
 	created_share->ownerID=ownerID;
 
-//	strcpy(created_share->name, shareName); // -1 removed
-//	cprintf("Name: ");
-	for(int i = 0; 1; i++){
-		created_share->name[i] = shareName[i];
-//		cprintf("%c", shareName[i]);
-		if(shareName[i] == '\0') break;
-	}
-//	cprintf("\n");
+	strncpy(created_share->name, shareName,sizeof(created_share->name) - 1);
 
 	created_share->size=size;
 	created_share->isWritable=isWritable;
 
 
 
+	if(created_share==NULL || created_share->framesStorage==NULL)
+	{
+		kfree((void*)created_share);
+		return NULL;
+	}
 	return created_share;
 
 }
@@ -139,32 +131,16 @@ struct Share* get_share(int32 ownerID, char* name)
 	//COMMENT THE FOLLOWING LINE BEFORE START CODING
 	//panic("get_share is not implemented yet");
 	//Your Code is Here...
-	cprintf("get_share: 134\n");
 	struct Share* founded = NULL;
-	bool found = 0;
 	acquire_spinlock(&AllShares.shareslock);
 	LIST_FOREACH(founded, &AllShares.shares_list) {
-		found = 1;
-		cprintf("id: %d\n", founded->ownerID);
-		cprintf("Name: ");
-		for(int i = 0; i < 1; i++){
-			if(name[i] != founded->name[i]){
-				found = 0;
-			}
-			cprintf("%d %c", i, name[i]);
-			if(name[i] == '\0') break;
-		}
-		cprintf("\n");
-		cprintf("HIIIIIIIII %d\n", found);
-		if(found && founded->ownerID == ownerID)
+		if(founded->ownerID == ownerID && strcmp(founded->name, name) == 0)
 		{
-			cprintf("Found id: %d\n", founded->ownerID);
 			release_spinlock(&AllShares.shareslock);
 			return founded;
 		}
 	}
 	release_spinlock(&AllShares.shareslock);
-	cprintf("147\n");
 	return NULL;
 }
 
@@ -188,14 +164,19 @@ int createSharedObject(int32 ownerID, char* shareName, uint32 size, uint8 isWrit
 	for (int k = 0; k < num_pages; k++)
 	{
 		struct FrameInfo *ptr_frame_info;
-//		int ret = allocate_frame(&ptr_frame_info);
-		uint32* ptr_page_table = NULL;
-		ptr_frame_info = get_frame_info(ptr_page_directory, (uint32)created_share + (k * PAGE_SIZE), &ptr_page_table);
-		cprintf("VA: %x\n",(uint32)virtual_address + (k * PAGE_SIZE));
-		map_frame(myenv->env_page_directory, ptr_frame_info, (uint32)virtual_address + (k * PAGE_SIZE),PERM_WRITEABLE);
-		pt_set_page_permissions(myenv->env_page_directory, (uint32)virtual_address + (k * PAGE_SIZE), 0, PERM_PRESENT);
-		created_share->framesStorage[k] = ptr_frame_info;
-
+		int ret = allocate_frame(&ptr_frame_info);
+		if (ret != E_NO_MEM)
+		{
+			cprintf("VA: %x\n",(uint32)(virtual_address + (k * PAGE_SIZE)));
+			map_frame(myenv->env_page_directory, ptr_frame_info, (uint32)(virtual_address + (k * PAGE_SIZE)),PERM_WRITEABLE);
+			pt_set_page_permissions(myenv->env_page_directory, (uint32)(virtual_address + (k * PAGE_SIZE)), 0, PERM_PRESENT);
+			created_share->framesStorage[k] = ptr_frame_info;
+		}
+		else
+		{
+			panic("No Memory");
+			return E_NO_SHARE;
+		}
 	}
 	acquire_spinlock(&AllShares.shareslock);
 	LIST_INSERT_TAIL(&AllShares.shares_list,created_share);
@@ -218,18 +199,14 @@ int getSharedObject(int32 ownerID, char* shareName, void* virtual_address)
 	struct Env* myenv = get_cpu_proc(); //The calling environment
 
 	struct Share * shared_obj = get_share(ownerID,shareName);
-	cprintf("return to getshareobject:: 205\n");
 	if(shared_obj == NULL) return E_SHARED_MEM_NOT_EXISTS;
 	uint32 numOfFrames = ROUNDUP(shared_obj->size ,PAGE_SIZE) / PAGE_SIZE;
 	for(int i = 0 ;i< numOfFrames ;i++)
 	{
-		cprintf("210\n");
 		map_frame(myenv->env_page_directory,shared_obj->framesStorage[i],(uint32)(virtual_address + (i * PAGE_SIZE)),shared_obj->isWritable * PERM_WRITEABLE);
-		cprintf("212\n");
 	}
-	cprintf("214\n");
+
 	shared_obj->references++;
-	cprintf("216\n");
 	return shared_obj->ID;
 }
 

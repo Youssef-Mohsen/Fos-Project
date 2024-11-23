@@ -16,9 +16,9 @@ struct Share
 	//Unique ID for this Share object
 	//Should be set to the VA of the created object
 	//after masking the most significant bit (to make it +ve)
-	int32 ID;
+	int32 ID ;
 	//ID of the owner environment
-	int32 ownerID;
+	int32 ownerID ;
 	//share name
 	char name[64];
 	//share size
