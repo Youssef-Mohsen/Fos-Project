@@ -146,7 +146,8 @@ void* smalloc(char *sharedVarName, uint32 size, uint8 isWritable)
 	//TODO: [PROJECT'24.MS2 - #18] [4] SHARED MEMORY [USER SIDE] - smalloc()
 	// Write your code here, remove the panic and write your code
 	//panic("smalloc() is not implemented yet...!!");
-	void *ptr = malloc(MAX(size,PAGE_SIZE));
+	size = MAX(size,PAGE_SIZE);
+	void *ptr = malloc(size);
 	if(ptr == NULL) return NULL;
 	 int ret = sys_createSharedObject(sharedVarName, size,  isWritable, ptr);
 	 if(ret == E_NO_SHARE || ret == E_SHARED_MEM_EXISTS) return NULL;
