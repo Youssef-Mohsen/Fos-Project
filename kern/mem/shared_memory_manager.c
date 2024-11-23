@@ -207,20 +207,65 @@ int getSharedObject(int32 ownerID, char* shareName, void* virtual_address)
 //it should free its framesStorage and the share object itself
 void free_share(struct Share* ptrShare)
 {
-	//TODO: [PROJECT'24.MS2 - BONUS#4] [4] SHARED MEMORY [KERNEL SIDE] - free_share()
-	//COMMENT THE FOLLOWING LINE BEFORE START CODING
-	panic("free_share is not implemented yet");
-	//Your Code is Here...
-
+    //TODO: [PROJECT'24.MS2 - BONUS#4] [4] SHARED MEMORY [KERNEL SIDE] - free_share()
+    //COMMENT THE FOLLOWING LINE BEFORE START CODING
+//    panic("free_share is not implemented yet");
+    //Your Code is Here...
+    if(ptrShare == NULL)return;
+    acquire_spinlock(&AllShares.shareslock);
+    LIST_REMOVE(&AllShares.shares_list,ptrShare);
+    release_spinlock(&AllShares.shareslock);
+    kfree((void*)ptrShare->framesStorage);
+    kfree((void*)ptrShare);
 }
 //========================
 // [B2] Free Share Object:
 //========================
+struct Share* get_Share_id(int32 sharedObjectID,void * va){
+	 uint32 id = ((uint32)va << 1) >> 1;
+	 cprintf("VA : %x \n",id);
+    struct Share* founded = NULL;
+        acquire_spinlock(&AllShares.shareslock);
+        LIST_FOREACH(founded, &AllShares.shares_list) {
+        	cprintf("Found ID : %x - Id : %x \n",founded->ID,sharedObjectID);
+            if(founded->ID == sharedObjectID)
+            {
+                release_spinlock(&AllShares.shareslock);
+                return founded;
+            }
+        }
+        release_spinlock(&AllShares.shareslock);
+        return NULL;
+}
 int freeSharedObject(int32 sharedObjectID, void *startVA)
 {
-	//TODO: [PROJECT'24.MS2 - BONUS#4] [4] SHARED MEMORY [KERNEL SIDE] - freeSharedObject()
-	//COMMENT THE FOLLOWING LINE BEFORE START CODING
-	panic("freeSharedObject is not implemented yet");
-	//Your Code is Here...
-
+    //TODO: [PROJECT'24.MS2 - BONUS#4] [4] SHARED MEMORY [KERNEL SIDE] - freeSharedObject()
+    //COMMENT THE FOLLOWING LINE BEFORE START CODING
+//    panic("freeSharedObject is not implemented yet");
+    //Your Code is Here...
+	//struct Env* myenv = get_cpu_proc();
+        struct Share* ptr_share= get_Share_id(sharedObjectID,startVA);
+        cprintf("245\n");
+        cprintf("Share : %x \n",ptr_share);
+        uint32 no_of_pages = ROUNDUP(ptr_share->size , PAGE_SIZE)/PAGE_SIZE;
+        cprintf("Size : %d \n",ptr_share->size);
+        for(int k = 0;k<no_of_pages;k++)
+		{
+        	cprintf("250\n");
+			unmap_frame(ptr_page_directory, (uint32)startVA + k*PAGE_SIZE);
+        	//free_frame(ptr_share->framesStorage[k]);
+		}
+        cprintf("251\n");
+        if((ptr_page_directory[PDX(startVA)])&PERM_USED){
+        	cprintf("253\n");
+            kfree((void *)ptr_page_directory[PDX(startVA)]);
+        }
+        cprintf("256\n");
+        ptr_share->references--;
+        if(ptr_share->references <= 1){
+            free_share(ptr_share);
+        }
+        cprintf("261\n");
+        tlbflush();
+        return 0;
 }

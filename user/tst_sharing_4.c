@@ -47,8 +47,9 @@ _main(void)
 		diff = (freeFrames - sys_calculate_free_frames());
 		if (diff < expected || diff > expected +1+1 /*extra 1 page & 1 table for sbrk (at max)*/)
 			{is_correct = 0; cprintf("Wrong allocation (current=%d, expected=%d): make sure that you allocate the required space in the user environment and add its frames to frames_storage", freeFrames - sys_calculate_free_frames(), expected);}
-
+		cprintf("50\n");
 		sfree(x);
+		cprintf("52\n");
 		expected = 0 ;
 		int diff = (freeFrames - sys_calculate_free_frames());
 		if (diff !=  expected)
