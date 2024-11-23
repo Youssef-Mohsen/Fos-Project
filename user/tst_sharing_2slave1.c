@@ -34,6 +34,7 @@ _main(void)
 		expected = 1 ; /*1table*/
 		diff = (freeFrames - sys_calculate_free_frames());
 		if (diff != expected) panic("Wrong allocation (current=%d, expected=%d): make sure that you allocate the required space in the user environment and add its frames to frames_storage", freeFrames - sys_calculate_free_frames(), expected);
+
 	}
 	sys_unlock_cons();
 	//sys_unlock_cons();
@@ -51,9 +52,7 @@ _main(void)
 	}
 	sys_unlock_cons();
 	//sys_unlock_cons();
-
 	if (*y != 20) panic("Get(): Shared Variable is not created or got correctly") ;
-
 	//sys_lock_cons();
 	sys_lock_cons();
 	{
@@ -67,7 +66,6 @@ _main(void)
 	}
 	sys_unlock_cons();
 	//sys_unlock_cons();
-
 	if (*x != 10) panic("Get(): Shared Variable is not created or got correctly") ;
 
 	*z = *x + *y ;

@@ -232,8 +232,7 @@ int test_kmalloc()
 	{
 		freeFrames = (int)sys_calculate_free_frames() ;
 		freeDiskFrames = (int)pf_calculate_free_frames() ;
-		uint32 restOfKHeap = (KERNEL_HEAP_MAX - ACTUAL_START) - (2*Mega+2*Mega+/*4*kilo+4*kilo+*/8*kilo+3*Mega+6*Mega+16*kilo) ;
-		cprintf("restOfKheap : %x\n",restOfKHeap);
+		uint32 restOfKHeap = (KERNEL_HEAP_MAX - ACTUAL_START) - (2*Mega+2*Mega+/*4*kilo+4*kilo+*/8*kilo+3*Mega+6*Mega+16*kilo);
 		ptr_allocations[8] = kmalloc(restOfKHeap+1);
 		if (ptr_allocations[8] != NULL) { correct = 0; cprintf("18 Allocating insufficient space: should return NULL\n"); }
 		if (((int)pf_calculate_free_frames() - freeDiskFrames) != 0) { correct = 0; cprintf("18 Page file is changed while it's not expected to. (pages are wrongly allocated/de-allocated in PageFile)\n"); }
