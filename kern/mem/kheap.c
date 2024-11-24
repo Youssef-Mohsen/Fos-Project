@@ -172,7 +172,6 @@ void *kmalloc(unsigned int size)
 		{
 			struct FrameInfo *ptr_frame_info;
 			int ret = allocate_frame(&ptr_frame_info);
-			//map_frame(ptr_page_directory, ptr_frame_info, i + k * 1024, PERM_USER|PERM_WRITEABLE); REPLACED BY
 			if (ret != E_NO_MEM)
 			{
 				map_frame(ptr_page_directory, ptr_frame_info, i + k * PAGE_SIZE,PERM_WRITEABLE); // a3raf el page mnen
@@ -279,7 +278,7 @@ void *krealloc(void *va, uint32 new_size)
 {
 	// TODO: [PROJECT'24.MS2 - BONUS#1] [1] KERNEL HEAP - krealloc
 	//  Write your code here, remove the panic and write your code
-	return NULL;
+	//return NULL;
 //	panic("krealloc() is not implemented yet...!!");
 	void *ptr = NULL;
 	if(va == NULL){

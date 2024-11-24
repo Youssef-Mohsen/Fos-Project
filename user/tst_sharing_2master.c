@@ -68,10 +68,9 @@ _main(void)
 	//to check that the slave environments completed successfully
 	rsttst();
 
-	sys_run_env(id1);
+	sys_run_env(id1);\
 	sys_run_env(id2);
 	sys_run_env(id3);
-
 	//to ensure that the slave environments completed successfully
 	while (gettst()!=3) ;// panic("test failed");
 

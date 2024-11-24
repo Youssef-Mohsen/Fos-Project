@@ -17,6 +17,7 @@ void* sbrk(int increment)
 }
 uint32 no_pages_marked[NUM_OF_UHEAP_PAGES];
 bool isPageMarked[NUM_OF_UHEAP_PAGES];
+int32 ids[NUM_OF_UHEAP_PAGES];
 //=================================
 // [2] ALLOCATE SPACE IN USER HEAP:
 //=================================
@@ -148,9 +149,10 @@ void* smalloc(char *sharedVarName, uint32 size, uint8 isWritable)
 	//panic("smalloc() is not implemented yet...!!");
 	void *ptr = malloc(MAX(size,PAGE_SIZE));
 	if(ptr == NULL) return NULL;
-	 int ret = sys_createSharedObject(sharedVarName, size,  isWritable, ptr);
+	 int32 ret = sys_createSharedObject(sharedVarName, size,  isWritable, ptr);
 	 if(ret == E_NO_SHARE || ret == E_SHARED_MEM_EXISTS) return NULL;
-	 cprintf("153\n");
+	 cprintf("Smalloc : %x \n",ptr);
+	 ids[UHEAP_PAGE_INDEX((uint32)ptr)] = ret;
 	 return ptr;
 }
 
@@ -189,9 +191,11 @@ void* sget(int32 ownerEnvID, char *sharedVarName)
 
 void sfree(void* virtual_address)
 {
-	//TODO: [PROJECT'24.MS2 - BONUS#4] [4] SHARED MEMORY [USER SIDE] - sfree()
-	// Write your code here, remove the panic and write your code
-	panic("sfree() is not implemented yet...!!");
+    //TODO: [PROJECT'24.MS2 - BONUS#4] [4] SHARED MEMORY [USER SIDE] - sfree()
+    // Write your code here, remove the panic and write your code
+//    panic("sfree() is not implemented yet...!!");
+    int32 id = ids[UHEAP_PAGE_INDEX((uint32)virtual_address)];
+    int ret = sys_freeSharedObject(id,virtual_address);
 }
 
 
