@@ -13,6 +13,8 @@
 #include "kheap.h"
 #include "memory_manager.h"
 
+uint32 tablesX[1024]={0};
+
 //==================================================================================//
 //============================== GIVEN FUNCTIONS ===================================//
 //==================================================================================//
@@ -170,6 +172,9 @@ int createSharedObject(int32 ownerID, char* shareName, uint32 size, uint8 isWrit
 	acquire_spinlock(&AllShares.shareslock);
 	LIST_INSERT_TAIL(&AllShares.shares_list,created_share);
 	release_spinlock(&AllShares.shareslock);
+	cprintf("175\n");
+	tablesX[PDX(virtual_address)]++;
+	cprintf("VA: %x index:%d tablesX: %d\n",virtual_address,PDX(virtual_address)),tablesX[PDX(virtual_address)];
 	return created_share->ID;
 }
 
@@ -193,6 +198,7 @@ int getSharedObject(int32 ownerID, char* shareName, void* virtual_address)
 		map_frame(myenv->env_page_directory,shared_obj->framesStorage[i],(uint32)(virtual_address + (i * PAGE_SIZE)),PERM_USER|shared_obj->isWritable * PERM_WRITEABLE);
 	}
 	shared_obj->references++;
+	tablesX[PDX(virtual_address)]++;
 	return shared_obj->ID;
 }
 
@@ -243,29 +249,38 @@ int freeSharedObject(int32 sharedObjectID, void *startVA)
     //COMMENT THE FOLLOWING LINE BEFORE START CODING
 //    panic("freeSharedObject is not implemented yet");
     //Your Code is Here...
-	//struct Env* myenv = get_cpu_proc();
-        struct Share* ptr_share= get_Share_id(sharedObjectID,startVA);
-        cprintf("245\n");
-        cprintf("Share : %x \n",ptr_share);
-        uint32 no_of_pages = ROUNDUP(ptr_share->size , PAGE_SIZE)/PAGE_SIZE;
-        cprintf("Size : %d \n",ptr_share->size);
-        for(int k = 0;k<no_of_pages;k++)
-		{
-        	cprintf("250\n");
-			unmap_frame(ptr_page_directory, (uint32)startVA + k*PAGE_SIZE);
-        	//free_frame(ptr_share->framesStorage[k]);
-		}
-        cprintf("251\n");
-        if((ptr_page_directory[PDX(startVA)])&PERM_USED){
-        	cprintf("253\n");
-            kfree((void *)ptr_page_directory[PDX(startVA)]);
-        }
-        cprintf("256\n");
-        ptr_share->references--;
-        if(ptr_share->references <= 1){
-            free_share(ptr_share);
-        }
-        cprintf("261\n");
-        tlbflush();
-        return 0;
+	struct Env* myenv = get_cpu_proc();
+	struct Share* ptr_share= get_Share_id(sharedObjectID,startVA);
+	cprintf("245\n");
+	cprintf("Share : %x \n",ptr_share);
+	uint32 no_of_pages = ROUNDUP(ptr_share->size , PAGE_SIZE)/PAGE_SIZE;
+	cprintf("Size : %d \n",ptr_share->size);
+	for(int k = 0;k<no_of_pages;k++)
+	{
+		cprintf("250\n");
+		unmap_frame(myenv->env_page_directory, (uint32)startVA + k*PAGE_SIZE);
+		//free_frame(ptr_share->framesStorage[k]);
+	}
+	cprintf("251\n");
+	//if((myenv->env_page_directory[PDX(startVA)])&PERM_USED){
+	cprintf("253\n");
+
+	uint32* ptr_page_table ;
+	int ret = get_page_table(myenv->env_page_directory, (uint32)startVA, &ptr_page_table);
+	cprintf("VA: %x index:%d tablesX:%d\n",startVA,PDX(startVA),tablesX[PDX(startVA)]);
+	if (tablesX[PDX(startVA)]) tablesX[PDX(startVA)]--;
+	if (ret != TABLE_NOT_EXIST && tablesX[PDX(startVA)] == 0){
+		kfree((void*)ptr_page_table);
+	}
+
+	//}
+	cprintf("256\n");
+	ptr_share->references--;
+	if(ptr_share->references < 1){
+		free_share(ptr_share);
+	}
+	cprintf("ret: %d\n",ret);
+	cprintf("261\n");
+	tlbflush();
+	return 0;
 }
