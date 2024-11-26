@@ -160,7 +160,7 @@ void fault_handler(struct Trapframe *tf)
 			{
 				env_exit();
 			}
-			else if ((pt_get_page_permissions(faulted_env->env_page_directory,fault_va) & PERM_PRESENT) && ((pt_get_page_permissions(faulted_env->env_page_directory,fault_va) & PERM_WRITEABLE)))
+			else if ((pt_get_page_permissions(faulted_env->env_page_directory,fault_va) & PERM_PRESENT) && (!(pt_get_page_permissions(faulted_env->env_page_directory,fault_va) & PERM_WRITEABLE)))
 			{
 				env_exit();
 			}

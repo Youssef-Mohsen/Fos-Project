@@ -169,6 +169,7 @@ void* sget(int32 ownerEnvID, char *sharedVarName)
 	void * ptr = malloc(MAX(size,PAGE_SIZE));
 	if(ptr == NULL) return NULL;
 	int ret = sys_getSharedObject(ownerEnvID,sharedVarName,ptr);
+	ids[UHEAP_PAGE_INDEX((uint32)ptr)] = ret;
 	if(ret == E_SHARED_MEM_NOT_EXISTS ) return NULL;
 	return ptr;
 }

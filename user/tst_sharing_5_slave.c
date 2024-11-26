@@ -32,6 +32,7 @@ _main(void)
 
 	diff = (sys_calculate_free_frames() - freeFrames);
 	expected = 1;
+	cprintf("Free: %d\n",diff);
 	if (diff != expected) panic("wrong free: frames removed not equal 1 !, correct frames to be removed is 1:\nfrom the env: 1 table for x\nframes_storage: not cleared yet\n");
 
 	//to ensure that this environment is completed successfully
