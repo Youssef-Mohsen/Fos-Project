@@ -176,7 +176,7 @@ void *kmalloc(unsigned int size)
 			if (ret != E_NO_MEM)
 			{
 				map_frame(ptr_page_directory, ptr_frame_info, i + k * PAGE_SIZE,PERM_WRITEABLE);
-				//isTableExist[PDX(i + k * PAGE_SIZE)]++;
+				isTableExist[PDX(i + k * PAGE_SIZE)]++;
 			}
 			else
 			{
@@ -217,7 +217,7 @@ void kfree(void *va)
 			uint32 pa = kheap_physical_address((uint32)va + i*PAGE_SIZE);
 			to_virtual[pa / PAGE_SIZE] = 0;
 			unmap_frame(ptr_page_directory, (uint32)va + i*PAGE_SIZE);
-			//isTableExist[PDX((uint32)va + i*PAGE_SIZE)]--;
+			isTableExist[PDX((uint32)va + i*PAGE_SIZE)]--;
 		}
     } else{
         panic("kfree: The virtual Address is invalid");

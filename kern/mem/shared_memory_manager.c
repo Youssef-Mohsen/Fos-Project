@@ -151,7 +151,6 @@ int createSharedObject(int32 ownerID, char* shareName, uint32 size, uint8 isWrit
 	struct Share* created_share = create_share(ownerID,  shareName,  size,  isWritable);
 	if(created_share == NULL) return E_NO_SHARE;
 	uint32 num_pages = ROUNDUP(size ,PAGE_SIZE) / PAGE_SIZE;
-
 	for (int k = 0; k < num_pages; k++)
 	{
 		struct FrameInfo *ptr_frame_info;
@@ -160,7 +159,7 @@ int createSharedObject(int32 ownerID, char* shareName, uint32 size, uint8 isWrit
 		{
 			map_frame(myenv->env_page_directory, ptr_frame_info, (uint32)(virtual_address + (k * PAGE_SIZE)),PERM_USER|PERM_WRITEABLE);
 			created_share->framesStorage[k] = ptr_frame_info;
-			isTableExist[PDX((uint32)(virtual_address + (k * PAGE_SIZE)))]++;
+			isTableExist[PDX((uint32)((uint32)virtual_address + (k * PAGE_SIZE)))]++;
 		}
 		else
 		{
@@ -192,7 +191,7 @@ int getSharedObject(int32 ownerID, char* shareName, void* virtual_address)
 	for(int i = 0 ;i< numOfFrames ;i++)
 	{
 		map_frame(myenv->env_page_directory,shared_obj->framesStorage[i],(uint32)(virtual_address + (i * PAGE_SIZE)),PERM_USER|shared_obj->isWritable * PERM_WRITEABLE);
-		isTableExist[PDX((uint32)(virtual_address + (i * PAGE_SIZE)))]++;
+		isTableExist[PDX((uint32)((uint32)virtual_address + (i * PAGE_SIZE)))]++;
 	}
 	shared_obj->references++;
 	cprintf("References : %d\n",shared_obj->references);
@@ -228,7 +227,6 @@ struct Share* get_Share_id(int32 sharedObjectID,void * va){
     struct Share* founded = NULL;
         acquire_spinlock(&AllShares.shareslock);
         LIST_FOREACH(founded, &AllShares.shares_list) {
-        	cprintf("Found ID : %x - Id : %x \n",founded->ID,sharedObjectID);
             if(founded->ID == sharedObjectID)
             {
                 release_spinlock(&AllShares.shareslock);
@@ -242,37 +240,33 @@ int freeSharedObject(int32 sharedObjectID, void *startVA)
 {
     //TODO: [PROJECT'24.MS2 - BONUS#4] [4] SHARED MEMORY [KERNEL SIDE] - freeSharedObject()
     //COMMENT THE FOLLOWING LINE BEFORE START CODING
-//    panic("freeSharedObject is not implemented yet");
+    //panic("freeSharedObject is not implemented yet");
     //Your Code is Here...
-	struct Env* myenv = get_cpu_proc();
+		struct Env* myenv = get_cpu_proc();
         struct Share* ptr_share= get_Share_id(sharedObjectID,startVA);
-        bool page_empty = 0;
-        cprintf("245\n");
         cprintf("Share : %x \n",ptr_share);
         if(ptr_share == NULL) return -1;
         uint32 no_of_pages = ROUNDUP(ptr_share->size , PAGE_SIZE)/PAGE_SIZE;
-        cprintf("Size : %d \n",ptr_share->size);
         uint32* ptr_page_table;
         for(int k = 0;k<no_of_pages;k++)
 		{
 			unmap_frame(myenv->env_page_directory, (uint32)startVA + k*PAGE_SIZE);
 			int ret = get_page_table(myenv->env_page_directory, (uint32)startVA+ k*PAGE_SIZE, &ptr_page_table);
-			isTableExist[PDX((uint32)startVA+ k*PAGE_SIZE)]--;
-			cprintf("Page Index : %d\n",isTableExist[PDX((uint32)startVA+ k*PAGE_SIZE)]);
-			if(isTableExist[PDX((uint32)startVA+ k*PAGE_SIZE)] <= 0){
-				cprintf("264\n");
+			isTableExist[PDX((uint32)((uint32)startVA+ (k*PAGE_SIZE)))]--;
+			cprintf("Page Index : %d\n",isTableExist[PDX((uint32)((uint32)startVA+ (k*PAGE_SIZE)))]);
+			if(isTableExist[PDX((uint32)((uint32)startVA+ (k*PAGE_SIZE)))] <= 0)
+			{
 				kfree((void*)ptr_page_table);
-				myenv->env_page_directory[PDX((uint32)startVA+ k*PAGE_SIZE)] = 0;
+				myenv->env_page_directory[PDX((uint32)((uint32)startVA+ (k*PAGE_SIZE)))] = 0;
 			}
 		}
-        //cprintf("251\n");
+
         ptr_share->references--;
-        cprintf("References2 : %d\n",ptr_share->references);
-        if(ptr_share->references <= 1){
-        	cprintf("269\n");
+
+        if(ptr_share->references < 1){
             free_share(ptr_share);
         }
-       // cprintf("261\n");
+        cprintf("References2 : %d\n",ptr_share->references);
         tlbflush();
         return 0;
 }
