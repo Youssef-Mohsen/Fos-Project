@@ -241,6 +241,7 @@ struct Share* get_Share_id(int32 sharedObjectID,void * va){
         return NULL;
 }
 bool entered = 0;
+int EID = 2048;
 int freeSharedObject(int32 sharedObjectID, void *startVA)
 {
     //TODO: [PROJECT'24.MS2 - BONUS#4] [4] SHARED MEMORY [KERNEL SIDE] - freeSharedObject()
@@ -248,6 +249,11 @@ int freeSharedObject(int32 sharedObjectID, void *startVA)
     //panic("freeSharedObject is not implemented yet");
     //Your Code is Here...
 		struct Env* myenv = get_cpu_proc();
+		if (EID == myenv->env_id)
+		{
+			cprintf("\nwait <%d>\n",myenv->env_id);
+			for (int i =0 ;i<100000;i++){}
+		}
         struct Share* ptr_share= get_Share_id(sharedObjectID,startVA);
         cprintf("Share : %x \n",ptr_share);
         if(ptr_share == NULL) return -1;
@@ -281,8 +287,7 @@ int freeSharedObject(int32 sharedObjectID, void *startVA)
 					break;
 				}
 			}
-			if(!entered || myenv->env_id==2048 || myenv->env_id==2051 || myenv->env_id==2052){
-				entered = 1;
+
 			if(isFree)
 			{
 				cprintf("Enter G\n");
@@ -290,7 +295,7 @@ int freeSharedObject(int32 sharedObjectID, void *startVA)
 				myenv->env_page_directory[PDX((uint32)((uint32)startVA+ (k*PAGE_SIZE)))] = 0;
 			}
 			}
-		}
+
 
 
 
@@ -300,6 +305,7 @@ int freeSharedObject(int32 sharedObjectID, void *startVA)
         	cprintf("Enter References\n");
             free_share(ptr_share);
         }
+        EID =myenv->env_id;
         cprintf("References2 : %d\n",ptr_share->references);
         tlbflush();
         return 0;
