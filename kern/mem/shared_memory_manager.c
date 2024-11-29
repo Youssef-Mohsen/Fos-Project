@@ -17,7 +17,7 @@
 //============================== GIVEN FUNCTIONS ===================================//
 //==================================================================================//
 struct Share* get_share(int32 ownerID, char* name);
-
+uint32 isTableExist[1024][6000];
 //===========================
 // [1] INITIALIZE SHARES:
 //===========================
@@ -159,7 +159,9 @@ int createSharedObject(int32 ownerID, char* shareName, uint32 size, uint8 isWrit
 		{
 			map_frame(myenv->env_page_directory, ptr_frame_info, (uint32)(virtual_address + (k * PAGE_SIZE)),PERM_USER|PERM_WRITEABLE);
 			created_share->framesStorage[k] = ptr_frame_info;
-			isTableExist[PDX((uint32)((uint32)virtual_address + (k * PAGE_SIZE)))]++;
+			//isTableExist[PDX((uint32)((uint32)virtual_address + (k * PAGE_SIZE)))][myenv->env_id]++;
+			//cprintf("Page Index1 : %d\n",isTableExist[PDX((uint32)((uint32)virtual_address + (k * PAGE_SIZE)))]);
+			//cprintf("Index1 : %d\n",PDX((uint32)((uint32)virtual_address + (k * PAGE_SIZE))));
 		}
 		else
 		{
@@ -191,7 +193,9 @@ int getSharedObject(int32 ownerID, char* shareName, void* virtual_address)
 	for(int i = 0 ;i< numOfFrames ;i++)
 	{
 		map_frame(myenv->env_page_directory,shared_obj->framesStorage[i],(uint32)(virtual_address + (i * PAGE_SIZE)),PERM_USER|shared_obj->isWritable * PERM_WRITEABLE);
-		isTableExist[PDX((uint32)((uint32)virtual_address + (i * PAGE_SIZE)))]++;
+		//isTableExist[PDX((uint32)((uint32)virtual_address + (i * PAGE_SIZE)))][myenv->env_id]++;
+		//cprintf("Page Index2 : %d\n",isTableExist[PDX((uint32)((uint32)virtual_address + (i * PAGE_SIZE)))]);
+		//cprintf("Index2 : %d\n",PDX((uint32)((uint32)virtual_address + (i * PAGE_SIZE))));
 	}
 	shared_obj->references++;
 	cprintf("References : %d\n",shared_obj->references);
@@ -236,6 +240,7 @@ struct Share* get_Share_id(int32 sharedObjectID,void * va){
         release_spinlock(&AllShares.shareslock);
         return NULL;
 }
+bool entered = 0;
 int freeSharedObject(int32 sharedObjectID, void *startVA)
 {
     //TODO: [PROJECT'24.MS2 - BONUS#4] [4] SHARED MEMORY [KERNEL SIDE] - freeSharedObject()
@@ -248,22 +253,51 @@ int freeSharedObject(int32 sharedObjectID, void *startVA)
         if(ptr_share == NULL) return -1;
         uint32 no_of_pages = ROUNDUP(ptr_share->size , PAGE_SIZE)/PAGE_SIZE;
         uint32* ptr_page_table;
+
         for(int k = 0;k<no_of_pages;k++)
 		{
-			unmap_frame(myenv->env_page_directory, (uint32)startVA + k*PAGE_SIZE);
-			int ret = get_page_table(myenv->env_page_directory, (uint32)startVA+ k*PAGE_SIZE, &ptr_page_table);
-			isTableExist[PDX((uint32)((uint32)startVA+ (k*PAGE_SIZE)))]--;
-			cprintf("Page Index : %d\n",isTableExist[PDX((uint32)((uint32)startVA+ (k*PAGE_SIZE)))]);
-			if(isTableExist[PDX((uint32)((uint32)startVA+ (k*PAGE_SIZE)))] <= 0)
+
+			int ret = get_page_table(myenv->env_page_directory, (uint32)((uint32)startVA + (k*PAGE_SIZE)), &ptr_page_table);
+			unmap_frame(myenv->env_page_directory, (uint32)((uint32)startVA + (k*PAGE_SIZE)));
+			//isTableExist[PDX((uint32)((uint32)startVA + (k * PAGE_SIZE)))][myenv->env_id]--;
+			//cprintf("Page Index3 : %d\n",isTableExist[PDX((uint32)((uint32)startVA+ (k*PAGE_SIZE)))][myenv->env_id]);
+			//cprintf("Index3 : %d\n",PDX((uint32)((uint32)startVA + (k * PAGE_SIZE))));
+			/*if(ptr_page_table != NULL){
+			if(isTableExist[PDX((uint32)((uint32)startVA+ (k * PAGE_SIZE)))][myenv->env_id] <= 0)
 			{
+				cprintf("Enter free page table\n");
 				kfree((void*)ptr_page_table);
 				myenv->env_page_directory[PDX((uint32)((uint32)startVA+ (k*PAGE_SIZE)))] = 0;
 			}
+			}*/
+			bool isFree = 1;
+			//uint32 pte_available_bits = ptr_page_table[PTX(virtual_address)] & PERM_AVAILABLE;
+			//ptr_page_table[PTX(virtual_address)] = pte_available_bits;
+			for(int i=0;i<1024;i++)
+			{
+
+				if((EXTRACT_ADDRESS(ptr_page_table[i])) != 0){
+					isFree = 0;
+					break;
+				}
+			}
+			if(!entered || myenv->env_id==2048 || myenv->env_id==2051 || myenv->env_id==2052){
+				entered = 1;
+			if(isFree)
+			{
+				cprintf("Enter G\n");
+				kfree((void*)ptr_page_table);
+				myenv->env_page_directory[PDX((uint32)((uint32)startVA+ (k*PAGE_SIZE)))] = 0;
+			}
+			}
 		}
+
+
 
         ptr_share->references--;
 
         if(ptr_share->references < 1){
+        	cprintf("Enter References\n");
             free_share(ptr_share);
         }
         cprintf("References2 : %d\n",ptr_share->references);

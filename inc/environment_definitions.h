@@ -125,6 +125,7 @@ struct Env {
 	uint32 heap_start;
 	uint32 heap_hard_limit;
 	uint32 heap_brk;
+	//uint32 isTableExist[1024];
 	//=======================================================================
 	//for page file management
 	uint32* disk_env_pgdir;
