@@ -47,6 +47,9 @@ int numOfKheapVACalls ;
 uint32 start;
 uint32 hard_limit;
 uint32 brk;
-uint32 isTableExist[1024];
+#define KHEAP_PAGE_INDEX(va) (va - hard_limit - PAGE_SIZE) / PAGE_SIZE
+uint32 no_pages_alloc[1048576];
+uint32 to_virtual[1048576];
+//uint32 isTableExist[1024][6000];
 
 #endif // FOS_KERN_KHEAP_H_
