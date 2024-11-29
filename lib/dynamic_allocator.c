@@ -556,9 +556,9 @@ void *realloc_block_FF(void* va, uint32 new_size)
 			uint32 needed_size = new_size - cur_size; //needed size in single Bytes
 			if(needed_size > nextBLOCK_size)
 			{
-				free_block(va); //set it free
 				void *new_va = alloc_block_FF(new_size); //new allocation
 				copy_data(va, new_va); //transfer data
+				free_block(va); //set it free
 				return new_va;
 			}
 			uint32 remaining_size = nextBLOCK_size - needed_size;
