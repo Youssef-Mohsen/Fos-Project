@@ -252,7 +252,7 @@ int freeSharedObject(int32 sharedObjectID, void *startVA)
 		if (EID == myenv->env_id)
 		{
 			cprintf("\nwait <%d>\n",myenv->env_id);
-			for (int i =0 ;i<100000;i++){}
+			//for (int i =0 ;i<100000;i++){}
 		}
         struct Share* ptr_share= get_Share_id(sharedObjectID,startVA);
         cprintf("Share : %x \n",ptr_share);

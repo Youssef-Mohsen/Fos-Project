@@ -17,9 +17,8 @@ void* sbrk(int increment)
 }
 uint32 no_pages_marked[NUM_OF_UHEAP_PAGES];
 bool isPageMarked[NUM_OF_UHEAP_PAGES];
-int32 ids[1024][2052];
-int32 id_index[NUM_OF_UHEAP_PAGES];
-uint32 shared_index=0;
+int32 ids[NUM_OF_UHEAP_PAGES];
+
 //=================================
 // [2] ALLOCATE SPACE IN USER HEAP:
 //=================================
@@ -150,14 +149,15 @@ void* smalloc(char *sharedVarName, uint32 size, uint8 isWritable)
 	//TODO: [PROJECT'24.MS2 - #18] [4] SHARED MEMORY [USER SIDE] - smalloc()
 	// Write your code here, remove the panic and write your code
 	//panic("smalloc() is not implemented yet...!!");
+
 	void *ptr = malloc(MAX(size,PAGE_SIZE));
 	if(ptr == NULL) return NULL;
 	 int32 ret = sys_createSharedObject(sharedVarName, size,  isWritable, ptr);
 	 if(ret == E_NO_SHARE || ret == E_SHARED_MEM_EXISTS) return NULL;
 	 cprintf("Smalloc : %x \n",ptr);
 
-	 id_index[UHEAP_PAGE_INDEX((uint32)ptr)] = ++shared_index;
-	 ids[ id_index[UHEAP_PAGE_INDEX((uint32)ptr)] ][myEnv->env_id] = ret;
+
+	 ids[UHEAP_PAGE_INDEX((uint32)ptr)] =  ret;
 	 return ptr;
 }
 
@@ -174,8 +174,7 @@ void* sget(int32 ownerEnvID, char *sharedVarName)
 	void * ptr = malloc(MAX(size,PAGE_SIZE));
 	if(ptr == NULL) return NULL;
 	int32 ret = sys_getSharedObject(ownerEnvID,sharedVarName,ptr);
-	id_index[UHEAP_PAGE_INDEX((uint32)ptr)] = ++shared_index;
-	ids[ id_index[UHEAP_PAGE_INDEX((uint32)ptr)] ][myEnv->env_id] = ret;
+	ids[UHEAP_PAGE_INDEX((uint32)ptr)] =  ret;
 	cprintf("Env Id : %d\n",myEnv->env_id);
 	if(ret == E_SHARED_MEM_NOT_EXISTS ) return NULL;
 	return ptr;
@@ -202,7 +201,7 @@ void sfree(void* virtual_address)
     //TODO: [PROJECT'24.MS2 - BONUS#4] [4] SHARED MEMORY [USER SIDE] - sfree()
     // Write your code here, remove the panic and write your code
 //    panic("sfree() is not implemented yet...!!");
-	int32 id = ids[id_index[UHEAP_PAGE_INDEX((uint32)virtual_address)]][myEnv->env_id];
+	int32 id = ids[UHEAP_PAGE_INDEX((uint32)virtual_address)];
     int ret = sys_freeSharedObject(id,virtual_address);
 }
 
