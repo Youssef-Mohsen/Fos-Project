@@ -14,6 +14,7 @@
 
 uint32 no_pages_alloc[NUM_OF_KHEAP_PAGES];
 uint32 to_virtual[1048576];
+
 int initialize_kheap_dynamic_allocator(uint32 daStart, uint32 initSizeToAllocate, uint32 daLimit)
 {
 	//TODO: [PROJECT'24.MS2 - #01] [1] KERNEL HEAP - initialize_kheap_dynamic_allocator
@@ -172,10 +173,10 @@ void *kmalloc(unsigned int size)
 		{
 			struct FrameInfo *ptr_frame_info;
 			int ret = allocate_frame(&ptr_frame_info);
-			//map_frame(ptr_page_directory, ptr_frame_info, i + k * 1024, PERM_USER|PERM_WRITEABLE); REPLACED BY
 			if (ret != E_NO_MEM)
 			{
-				map_frame(ptr_page_directory, ptr_frame_info, i + k * PAGE_SIZE,PERM_WRITEABLE); // a3raf el page mnen
+				map_frame(ptr_page_directory, ptr_frame_info, i + k * PAGE_SIZE,PERM_WRITEABLE);
+				isTableExist[PDX(i + k * PAGE_SIZE)]++;
 			}
 			else
 			{
@@ -216,6 +217,7 @@ void kfree(void *va)
 			uint32 pa = kheap_physical_address((uint32)va + i*PAGE_SIZE);
 			to_virtual[pa / PAGE_SIZE] = 0;
 			unmap_frame(ptr_page_directory, (uint32)va + i*PAGE_SIZE);
+			isTableExist[PDX((uint32)va + i*PAGE_SIZE)]--;
 		}
     } else{
         panic("kfree: The virtual Address is invalid");
@@ -279,7 +281,7 @@ void *krealloc(void *va, uint32 new_size)
 {
 	// TODO: [PROJECT'24.MS2 - BONUS#1] [1] KERNEL HEAP - krealloc
 	//  Write your code here, remove the panic and write your code
-	return NULL;
+	//return NULL;
 //	panic("krealloc() is not implemented yet...!!");
 	void *ptr = NULL;
 	if(va == NULL){

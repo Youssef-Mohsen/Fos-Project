@@ -47,6 +47,6 @@ int numOfKheapVACalls ;
 uint32 start;
 uint32 hard_limit;
 uint32 brk;
-
+uint32 isTableExist[1024];
 
 #endif // FOS_KERN_KHEAP_H_
