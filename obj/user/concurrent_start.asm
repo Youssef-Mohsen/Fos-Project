@@ -3976,7 +3976,7 @@ struct semaphore create_semaphore(char *semaphoreName, uint32 value)
   8018ee:	55                   	push   %ebp
   8018ef:	89 e5                	mov    %esp,%ebp
   8018f1:	83 ec 08             	sub    $0x8,%esp
-	//[PROJECT'24.MS3]
+	//TODO: [PROJECT'24.MS3 - #02] [2] USER-LEVEL SEMAPHORE - create_semaphore
 	//COMMENT THE FOLLOWING LINE BEFORE START CODING
 	panic("create_semaphore is not implemented yet");
   8018f4:	83 ec 04             	sub    $0x4,%esp
@@ -3993,7 +3993,7 @@ struct semaphore get_semaphore(int32 ownerEnvID, char* semaphoreName)
   801908:	55                   	push   %ebp
   801909:	89 e5                	mov    %esp,%ebp
   80190b:	83 ec 08             	sub    $0x8,%esp
-	//[PROJECT'24.MS3]
+	//TODO: [PROJECT'24.MS3 - #03] [2] USER-LEVEL SEMAPHORE - get_semaphore
 	//COMMENT THE FOLLOWING LINE BEFORE START CODING
 	panic("get_semaphore is not implemented yet");
   80190e:	83 ec 04             	sub    $0x4,%esp
@@ -4011,7 +4011,7 @@ void wait_semaphore(struct semaphore sem)
   801922:	55                   	push   %ebp
   801923:	89 e5                	mov    %esp,%ebp
   801925:	83 ec 08             	sub    $0x8,%esp
-	//[PROJECT'24.MS3]
+	//TODO: [PROJECT'24.MS3 - #04] [2] USER-LEVEL SEMAPHORE - wait_semaphore
 	//COMMENT THE FOLLOWING LINE BEFORE START CODING
 	panic("wait_semaphore is not implemented yet");
   801928:	83 ec 04             	sub    $0x4,%esp
@@ -4029,7 +4029,7 @@ void signal_semaphore(struct semaphore sem)
   80193c:	55                   	push   %ebp
   80193d:	89 e5                	mov    %esp,%ebp
   80193f:	83 ec 08             	sub    $0x8,%esp
-	//[PROJECT'24.MS3]
+	//TODO: [PROJECT'24.MS3 - #05] [2] USER-LEVEL SEMAPHORE - signal_semaphore
 	//COMMENT THE FOLLOWING LINE BEFORE START CODING
 	panic("signal_semaphore is not implemented yet");
   801942:	83 ec 04             	sub    $0x4,%esp
