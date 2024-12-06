@@ -233,7 +233,7 @@ void page_fault_handler(struct Env * faulted_env, uint32 fault_va)
 		int iWS =faulted_env->page_last_WS_index;
 		uint32 wsSize = env_page_ws_get_size(faulted_env);
 #endif
-
+ if(isPageReplacmentAlgorithmNchanceCLOCK()){
 	if(wsSize < (faulted_env->page_WS_max_size))
 	{
 		//cprintf("PLACEMENT=========================WS Size = %d\n", wsSize );
@@ -274,10 +274,99 @@ void page_fault_handler(struct Env * faulted_env, uint32 fault_va)
 		//refer to the project presentation and documentation for details
 		//TODO: [PROJECT'24.MS3] [2] FAULT HANDLER II - Replacement
 		// Write your code here, remove the panic and write your code
-		panic("page_fault_handler() Replacement is not implemented yet...!!");
-	}
-}
+		//panic("page_fault_handler() Replacement is not implemented yet...!!");
+		bool isFound = 0;
+		bool isModified=0;
+		uint32 *page_table_ptr;
+		struct WorkingSetElement *WS = faulted_env->page_last_WS_element;
+		struct WorkingSetElement *ModWS = NULL;
+		//struct FrameInfo *ptr_frame_info = get_frame_info(faulted_env->env_page_directory,fault_va,&page_table_ptr);
+		cprintf("N: %d\n",page_WS_max_sweeps);
+		if(page_WS_max_sweeps>0){
+		while(1)
+		{
+			cprintf("289\n");
+			int ret = pf_read_env_page(faulted_env,(void*)WS->virtual_address);
+			if(!((WS->virtual_address)&PERM_USED)){
+				cprintf("291\n");
+				if(WS->sweeps_counter==page_WS_max_sweeps)
+				{
+					cprintf("sweeps: %d\n",WS->sweeps_counter);
+					isFound=1;
+					break;
 
+				}
+				else{
+					cprintf("301\n");
+					WS->sweeps_counter++;
+				}
+			}
+		   else{
+			   cprintf("309\n");
+				WS->sweeps_counter=0;
+				pt_set_page_permissions(faulted_env->env_page_directory,(uint32)WS->virtual_address,0,PERM_USED); // not sure yet
+			}
+			cprintf("310\n");
+			if(LIST_NEXT(WS) == NULL) WS = LIST_FIRST(&faulted_env->page_WS_list);
+			else WS = LIST_NEXT(WS);
+			cprintf("311\n");
+			}
+		}
+		else {
+			while(1)
+			{
+				cprintf("318\n");
+				if(ModWS == faulted_env->page_last_WS_element) break;
+				if(!(pt_get_page_permissions(faulted_env->env_page_directory,(uint32)WS->virtual_address)&PERM_USED)){
+					cprintf("321\n");
+					if(WS->sweeps_counter==page_WS_max_sweeps)
+					{
+						cprintf("sweeps: %d\n",WS->sweeps_counter);
+						isFound=1;
+						if(WS->virtual_address&PERM_MODIFIED){
+							isModified = 1;
+							ModWS = WS;
+							continue;
+						}
+						break;
+
+					}
+					else{
+						WS->sweeps_counter--;
+					}
+				}
+			   else{
+				   cprintf("339\n");
+					WS->sweeps_counter=0;
+					pt_set_page_permissions(faulted_env->env_page_directory,(uint32)WS->virtual_address,0,PERM_USED); // not sure yet
+				}
+
+
+				if(LIST_NEXT(WS) == NULL) WS = LIST_FIRST(&faulted_env->page_WS_list);
+				else WS = LIST_NEXT(WS);
+
+				}
+			}
+
+			cprintf("351\n");
+			struct FrameInfo *ptr_frame_info;
+			if(isModified) ptr_frame_info = get_frame_info(faulted_env->env_page_directory,(uint32)ModWS->virtual_address,&page_table_ptr);
+
+			cprintf("355\n");
+			if(isFound){
+				if(isModified) {
+					int ret = pf_update_env_page(faulted_env, fault_va, ptr_frame_info);
+				}
+				else {
+					env_page_ws_invalidate(faulted_env, (uint32)WS->virtual_address);
+					pf_add_env_page(faulted_env,(uint32)WS->virtual_address,(void*)fault_va);
+				}
+				faulted_env->page_last_WS_element = LIST_NEXT(WS);
+			}
+			cprintf("366\n");
+	}
+ }
+}
 void __page_fault_handler_with_buffering(struct Env * curenv, uint32 fault_va)
 {
 	//[PROJECT] PAGE FAULT HANDLER WITH BUFFERING
