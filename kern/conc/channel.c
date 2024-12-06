@@ -63,7 +63,7 @@ void wakeup_one(struct Channel *chan)
 			locked_by_me = 1;
 		}
 		struct Env* waked_up_process = dequeue(&chan->queue);
-		sched_insert_ready0(waked_up_process);
+		sched_insert_ready(waked_up_process);
 		if(locked_by_me) release_spinlock(&(ProcessQueues.qlock));
 	}
 }

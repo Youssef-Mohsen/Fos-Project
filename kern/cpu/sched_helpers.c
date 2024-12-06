@@ -713,11 +713,11 @@ void env_set_priority(int envID, int priority)
 
 	acquire_spinlock(&ProcessQueues.qlock); // should we lock here or before the if? 
 	int old_priority = proc->priority;
-	proc->priority = priority;
-	if(proc->env_status == ENV_READY)
+	if(proc->env_status == ENV_READY && old_priority != priority)
 	{
-		LIST_REMOVE(&ProcessQueues.env_ready_queues[old_priority], proc);
-		LIST_INSERT_TAIL(&ProcessQueues.env_ready_queues[priority], proc);
+		sched_remove_ready(proc);
+		proc->priority = priority;
+		sched_insert_ready(proc);
 	}
 	release_spinlock(&ProcessQueues.qlock);
 }
