@@ -18,6 +18,7 @@ void *sbrk(int increment)
 uint32 no_pages_marked[NUM_OF_UHEAP_PAGES];
 bool isPageMarked[NUM_OF_UHEAP_PAGES];
 int32 ids[NUM_OF_UHEAP_PAGES];
+
 //=================================
 // [2] ALLOCATE SPACE IN USER HEAP:
 //=================================
@@ -47,7 +48,11 @@ void *malloc(uint32 size)
 	{
 		if (sys_isUHeapPlacementStrategyFIRSTFIT())
 		{
+<<<<<<< HEAD
 			// cprintf("47\n");
+=======
+			
+>>>>>>> origin/Mo7sen_2
 			ptr = alloc_block_FF(size);
 		}
 		else if (sys_isUHeapPlacementStrategyBESTFIT())
@@ -55,6 +60,7 @@ void *malloc(uint32 size)
 	}
 	else if (num_pages < max_no_of_pages - 1) // the else statement in kern/mem/kheap.c/kmalloc is wrong, rewrite it to be correct.
 	{
+<<<<<<< HEAD
 		// cprintf("52\n");
 		uint32 i = myEnv->heap_hard_limit + PAGE_SIZE; // start: hardlimit + 4  ______ end: KERNEL_HEAP_MAX
 		bool ok = 0;
@@ -69,12 +75,32 @@ void *malloc(uint32 size)
 
 				// cprintf("64\n");
 				while (cnt < num_pages - 1)
+=======
+		
+		uint32 i = myEnv->heap_hard_limit + PAGE_SIZE;											// start: hardlimit + 4  ______ end: KERNEL_HEAP_MAX
+		bool ok = 0;
+		while (i < (uint32)USER_HEAP_MAX)
+		{
+			
+			if (!isPageMarked[UHEAP_PAGE_INDEX(i)])
+			{
+				
+				uint32 j = i + (uint32)PAGE_SIZE;
+				uint32 cnt = 0;
+
+				
+				while(cnt < num_pages - 1)
+>>>>>>> origin/Mo7sen_2
 				{
 					if (j >= (uint32)USER_HEAP_MAX)
 						return NULL;
 					if (isPageMarked[UHEAP_PAGE_INDEX(j)])
 					{
+<<<<<<< HEAD
 						// cprintf("71\n");
+=======
+						
+>>>>>>> origin/Mo7sen_2
 						i = j;
 						goto sayed;
 					}
@@ -88,7 +114,12 @@ void *malloc(uint32 size)
 				{
 					isPageMarked[UHEAP_PAGE_INDEX((k * PAGE_SIZE) + i)] = 1;
 				}
+<<<<<<< HEAD
 				// cprintf("79\n");
+=======
+				
+
+>>>>>>> origin/Mo7sen_2
 			}
 		sayed:
 			if (ok)
@@ -101,7 +132,11 @@ void *malloc(uint32 size)
 		ptr = (void *)i;
 		no_pages_marked[UHEAP_PAGE_INDEX(i)] = num_pages;
 		sys_allocate_user_mem(i, size);
+<<<<<<< HEAD
 		// cprintf("91\n");
+=======
+		
+>>>>>>> origin/Mo7sen_2
 	}
 	else
 	{
@@ -132,12 +167,20 @@ void free(void *va)
 		size = no_of_pages * PAGE_SIZE;
 		for (int k = 0; k < no_of_pages; k++)
 		{
+<<<<<<< HEAD
 			isPageMarked[UHEAP_PAGE_INDEX((k * PAGE_SIZE) + (uint32)va)] = 0;
 		}
 		sys_free_user_mem((uint32)va, size);
 	}
 	else
 	{
+=======
+			isPageMarked[UHEAP_PAGE_INDEX((k*PAGE_SIZE)+(uint32)va)]=0;
+			sys_free_user_mem((uint32)va, k);
+		}
+
+	} else{
+>>>>>>> origin/Mo7sen_2
 		panic("User free: The virtual Address is invalid");
 	}
 }
@@ -154,6 +197,7 @@ void *smalloc(char *sharedVarName, uint32 size, uint8 isWritable)
 	//==============================================================
 	// TODO: [PROJECT'24.MS2 - #18] [4] SHARED MEMORY [USER SIDE] - smalloc()
 	// Write your code here, remove the panic and write your code
+<<<<<<< HEAD
 	// panic("smalloc() is not implemented yet...!!");
 	void *ptr = malloc(MAX(size, PAGE_SIZE));
 	if (ptr == NULL)
@@ -164,6 +208,19 @@ void *smalloc(char *sharedVarName, uint32 size, uint8 isWritable)
 	cprintf("Smalloc : %x \n", ptr);
 	ids[UHEAP_PAGE_INDEX((uint32)ptr)] = ret;
 	return ptr;
+=======
+	//panic("smalloc() is not implemented yet...!!");
+
+	void *ptr = malloc(MAX(size,PAGE_SIZE));
+	if(ptr == NULL) return NULL;
+	 int32 ret = sys_createSharedObject(sharedVarName, size,  isWritable, ptr);
+	 if(ret == E_NO_SHARE || ret == E_SHARED_MEM_EXISTS) return NULL;
+	 //cprintf("Smalloc : %x \n",ptr);
+
+
+	 ids[UHEAP_PAGE_INDEX((uint32)ptr)] =  ret;
+	 return ptr;
+>>>>>>> origin/Mo7sen_2
 }
 
 //========================================
@@ -171,6 +228,7 @@ void *smalloc(char *sharedVarName, uint32 size, uint8 isWritable)
 //========================================
 void *sget(int32 ownerEnvID, char *sharedVarName)
 {
+<<<<<<< HEAD
 	// TODO: [PROJECT'24.MS2 - #20] [4] SHARED MEMORY [USER SIDE] - sget()
 	//  Write your code here, remove the panic and write your code
 	// panic("sget() is not implemented yet...!!");
@@ -183,6 +241,19 @@ void *sget(int32 ownerEnvID, char *sharedVarName)
 	int ret = sys_getSharedObject(ownerEnvID, sharedVarName, ptr);
 	if (ret == E_SHARED_MEM_NOT_EXISTS)
 		return NULL;
+=======
+	//TODO: [PROJECT'24.MS2 - #20] [4] SHARED MEMORY [USER SIDE] - sget()
+	// Write your code here, remove the panic and write your code
+	//panic("sget() is not implemented yet...!!");
+	uint32 size = sys_getSizeOfSharedObject(ownerEnvID,sharedVarName);
+	if(size == E_SHARED_MEM_NOT_EXISTS) return NULL;
+	void * ptr = malloc(MAX(size,PAGE_SIZE));
+	if(ptr == NULL) return NULL;
+	int32 ret = sys_getSharedObject(ownerEnvID,sharedVarName,ptr);
+	ids[UHEAP_PAGE_INDEX((uint32)ptr)] =  ret;
+	
+	if(ret == E_SHARED_MEM_NOT_EXISTS ) return NULL;
+>>>>>>> origin/Mo7sen_2
 	return ptr;
 }
 
@@ -203,11 +274,19 @@ void *sget(int32 ownerEnvID, char *sharedVarName)
 
 void sfree(void *virtual_address)
 {
+<<<<<<< HEAD
 	// TODO: [PROJECT'24.MS2 - BONUS#4] [4] SHARED MEMORY [USER SIDE] - sfree()
 	//  Write your code here, remove the panic and write your code
 	//    panic("sfree() is not implemented yet...!!");
 	int32 id = ids[UHEAP_PAGE_INDEX((uint32)virtual_address)];
 	int ret = sys_freeSharedObject(id, virtual_address);
+=======
+    //TODO: [PROJECT'24.MS2 - BONUS#4] [4] SHARED MEMORY [USER SIDE] - sfree()
+    // Write your code here, remove the panic and write your code
+//    panic("sfree() is not implemented yet...!!");
+	int32 id = ids[UHEAP_PAGE_INDEX((uint32)virtual_address)];
+    int ret = sys_freeSharedObject(id,virtual_address);
+>>>>>>> origin/Mo7sen_2
 }
 
 //=================================

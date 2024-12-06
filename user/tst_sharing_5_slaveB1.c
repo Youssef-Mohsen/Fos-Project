@@ -35,6 +35,7 @@ _main(void)
 	sfree(x);
 	cprintf("Slave B1 env removed x\n");
 	expected = 1+1; /*1page+1table*/
+	cprintf("diff 2 : %d\n",sys_calculate_free_frames() - freeFrames);
 	if ((sys_calculate_free_frames() - freeFrames) !=  expected) panic("B1 wrong free: frames removed not equal 4 !, correct frames to be removed are 4:\nfrom the env: 1 table and 1 for frame of x\nframes_storage of x: should be cleared now\n");
 
 	//To indicate that it's completed successfully
