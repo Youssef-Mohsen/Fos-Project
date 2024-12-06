@@ -198,6 +198,11 @@ void *kmalloc(unsigned int size)
 	return ptr;
 }
 
+void* kmalloc2(unsigned int size)
+{
+	
+}
+
 void kfree(void *va)
 {
     // TODO: [PROJECT'24.MS2 - #04] [1] KERNEL HEAP - kfree
