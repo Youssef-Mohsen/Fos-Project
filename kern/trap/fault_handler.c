@@ -289,6 +289,7 @@ void page_fault_handler(struct Env * faulted_env, uint32 fault_va)
 		if(page_WS_max_sweeps>0){
 		while(1)
 		{
+
 			if(!(pt_get_page_permissions(faulted_env->env_page_directory,(uint32)WS->virtual_address)&PERM_USED)){
 				cprintf("291\n");
 				if(WS->sweeps_counter==page_WS_max_sweeps)
@@ -307,9 +308,9 @@ void page_fault_handler(struct Env * faulted_env, uint32 fault_va)
 				WS->sweeps_counter=0;
 				pt_set_page_permissions(faulted_env->env_page_directory,(uint32)WS->virtual_address,0,PERM_USED); // not sure yet
 			}
-			if(LIST_NEXT(WS) == NULL) WS = LIST_FIRST(&faulted_env->page_WS_list);
-			else WS = LIST_NEXT(WS);
-			}
+				if(LIST_NEXT(WS) == NULL) WS = LIST_FIRST(&faulted_env->page_WS_list);
+				else WS = LIST_NEXT(WS);
+		}
 		}
 		else {
 			while(1)
@@ -358,14 +359,25 @@ void page_fault_handler(struct Env * faulted_env, uint32 fault_va)
 					int ret = pf_update_env_page(faulted_env, fault_va, ptr_frame_info);
 				}
 
+			if(WS->virtual_address >= USTACKBOTTOM && WS->virtual_address < USTACKTOP) {
+				int ret = pf_read_env_page(faulted_env,(void*)WS->virtual_address);
+					if(ret == E_PAGE_NOT_EXIST_IN_PF){
+						pf_add_env_page(faulted_env,fault_va,(void*)WS->virtual_address);
+					}
+					else{
+						pf_update_env_page(faulted_env, fault_va, ptr_frame_info);
+					}
+				}
 				map_frame(faulted_env->env_page_directory,ptr_frame_info,fault_va, PERM_USER | PERM_WRITEABLE);
 				if(isModified){
 					pt_set_page_permissions(faulted_env->env_page_directory,(uint32)ModWS->virtual_address,PERM_USED,0);
-					//ModWS->virtual_address=fault_va;
+					ModWS->virtual_address = (unsigned int) fault_va;
+					ModWS->sweeps_counter=0;
 				}
 				else {
 					pt_set_page_permissions(faulted_env->env_page_directory,(uint32)WS->virtual_address,PERM_USED,0);
-					//WS->virtual_address=fault_va;
+					WS->virtual_address = (unsigned int) fault_va;
+					WS->sweeps_counter=0;
 				}
 				if(LIST_NEXT(WS) == NULL) faulted_env->page_last_WS_element = LIST_FIRST(&faulted_env->page_WS_list);
 				else faulted_env->page_last_WS_element = LIST_NEXT(WS);
