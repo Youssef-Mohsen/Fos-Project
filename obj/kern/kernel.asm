@@ -4615,12 +4615,12 @@ f01024f5:	c9                   	leave
 f01024f6:	c3                   	ret    
 
 f01024f7 <setKHeapPlacementStrategyCONTALLOC>:
-#define KHP_PLACE_FIRSTFIT 	0x1
 #define KHP_PLACE_BESTFIT 	0x2
 #define KHP_PLACE_NEXTFIT 	0x3
 #define KHP_PLACE_WORSTFIT 	0x4
 
 static inline void setKHeapPlacementStrategyCONTALLOC(){_KHeapPlacementStrategy = KHP_PLACE_CONTALLOC;}
+static inline void setKHeapPlacementStrategyFIRSTFIT(){_KHeapPlacementStrategy = KHP_PLACE_FIRSTFIT;}
 f01024f7:	55                   	push   %ebp
 f01024f8:	89 e5                	mov    %esp,%ebp
 f01024fa:	c7 05 18 f6 b1 f0 00 	movl   $0x0,0xf0b1f618
@@ -4630,7 +4630,7 @@ f0102505:	5d                   	pop    %ebp
 f0102506:	c3                   	ret    
 
 f0102507 <setKHeapPlacementStrategyFIRSTFIT>:
-static inline void setKHeapPlacementStrategyFIRSTFIT(){_KHeapPlacementStrategy = KHP_PLACE_FIRSTFIT;}
+static inline void setKHeapPlacementStrategyBESTFIT(){_KHeapPlacementStrategy = KHP_PLACE_BESTFIT;}
 f0102507:	55                   	push   %ebp
 f0102508:	89 e5                	mov    %esp,%ebp
 f010250a:	c7 05 18 f6 b1 f0 01 	movl   $0x1,0xf0b1f618
@@ -4640,7 +4640,7 @@ f0102515:	5d                   	pop    %ebp
 f0102516:	c3                   	ret    
 
 f0102517 <setKHeapPlacementStrategyBESTFIT>:
-static inline void setKHeapPlacementStrategyBESTFIT(){_KHeapPlacementStrategy = KHP_PLACE_BESTFIT;}
+static inline void setKHeapPlacementStrategyNEXTFIT(){_KHeapPlacementStrategy = KHP_PLACE_NEXTFIT;}
 f0102517:	55                   	push   %ebp
 f0102518:	89 e5                	mov    %esp,%ebp
 f010251a:	c7 05 18 f6 b1 f0 02 	movl   $0x2,0xf0b1f618
@@ -4650,7 +4650,7 @@ f0102525:	5d                   	pop    %ebp
 f0102526:	c3                   	ret    
 
 f0102527 <setKHeapPlacementStrategyNEXTFIT>:
-static inline void setKHeapPlacementStrategyNEXTFIT(){_KHeapPlacementStrategy = KHP_PLACE_NEXTFIT;}
+static inline void setKHeapPlacementStrategyWORSTFIT(){_KHeapPlacementStrategy = KHP_PLACE_WORSTFIT;}
 f0102527:	55                   	push   %ebp
 f0102528:	89 e5                	mov    %esp,%ebp
 f010252a:	c7 05 18 f6 b1 f0 03 	movl   $0x3,0xf0b1f618
@@ -4660,7 +4660,7 @@ f0102535:	5d                   	pop    %ebp
 f0102536:	c3                   	ret    
 
 f0102537 <setKHeapPlacementStrategyWORSTFIT>:
-static inline void setKHeapPlacementStrategyWORSTFIT(){_KHeapPlacementStrategy = KHP_PLACE_WORSTFIT;}
+
 f0102537:	55                   	push   %ebp
 f0102538:	89 e5                	mov    %esp,%ebp
 f010253a:	c7 05 18 f6 b1 f0 04 	movl   $0x4,0xf0b1f618
@@ -4670,8 +4670,8 @@ f0102545:	5d                   	pop    %ebp
 f0102546:	c3                   	ret    
 
 f0102547 <isKHeapPlacementStrategyCONTALLOC>:
-
 static inline uint8 isKHeapPlacementStrategyCONTALLOC(){if(_KHeapPlacementStrategy == KHP_PLACE_CONTALLOC) return 1; return 0;}
+static inline uint8 isKHeapPlacementStrategyFIRSTFIT(){if(_KHeapPlacementStrategy == KHP_PLACE_FIRSTFIT) return 1; return 0;}
 f0102547:	55                   	push   %ebp
 f0102548:	89 e5                	mov    %esp,%ebp
 f010254a:	a1 18 f6 b1 f0       	mov    0xf0b1f618,%eax
@@ -4684,7 +4684,7 @@ f0102559:	5d                   	pop    %ebp
 f010255a:	c3                   	ret    
 
 f010255b <isKHeapPlacementStrategyFIRSTFIT>:
-static inline uint8 isKHeapPlacementStrategyFIRSTFIT(){if(_KHeapPlacementStrategy == KHP_PLACE_FIRSTFIT) return 1; return 0;}
+static inline uint8 isKHeapPlacementStrategyBESTFIT(){if(_KHeapPlacementStrategy == KHP_PLACE_BESTFIT) return 1; return 0;}
 f010255b:	55                   	push   %ebp
 f010255c:	89 e5                	mov    %esp,%ebp
 f010255e:	a1 18 f6 b1 f0       	mov    0xf0b1f618,%eax
@@ -4697,7 +4697,7 @@ f010256e:	5d                   	pop    %ebp
 f010256f:	c3                   	ret    
 
 f0102570 <isKHeapPlacementStrategyBESTFIT>:
-static inline uint8 isKHeapPlacementStrategyBESTFIT(){if(_KHeapPlacementStrategy == KHP_PLACE_BESTFIT) return 1; return 0;}
+static inline uint8 isKHeapPlacementStrategyNEXTFIT(){if(_KHeapPlacementStrategy == KHP_PLACE_NEXTFIT) return 1; return 0;}
 f0102570:	55                   	push   %ebp
 f0102571:	89 e5                	mov    %esp,%ebp
 f0102573:	a1 18 f6 b1 f0       	mov    0xf0b1f618,%eax
@@ -4710,7 +4710,7 @@ f0102583:	5d                   	pop    %ebp
 f0102584:	c3                   	ret    
 
 f0102585 <isKHeapPlacementStrategyNEXTFIT>:
-static inline uint8 isKHeapPlacementStrategyNEXTFIT(){if(_KHeapPlacementStrategy == KHP_PLACE_NEXTFIT) return 1; return 0;}
+static inline uint8 isKHeapPlacementStrategyWORSTFIT(){if(_KHeapPlacementStrategy == KHP_PLACE_WORSTFIT) return 1; return 0;}
 f0102585:	55                   	push   %ebp
 f0102586:	89 e5                	mov    %esp,%ebp
 f0102588:	a1 18 f6 b1 f0       	mov    0xf0b1f618,%eax
@@ -4723,7 +4723,7 @@ f0102598:	5d                   	pop    %ebp
 f0102599:	c3                   	ret    
 
 f010259a <isKHeapPlacementStrategyWORSTFIT>:
-static inline uint8 isKHeapPlacementStrategyWORSTFIT(){if(_KHeapPlacementStrategy == KHP_PLACE_WORSTFIT) return 1; return 0;}
+
 f010259a:	55                   	push   %ebp
 f010259b:	89 e5                	mov    %esp,%ebp
 f010259d:	a1 18 f6 b1 f0       	mov    0xf0b1f618,%eax
