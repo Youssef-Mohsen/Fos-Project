@@ -289,7 +289,7 @@ void page_fault_handler(struct Env * faulted_env, uint32 fault_va)
 		if(page_WS_max_sweeps>0){
 		while(1)
 		{
-
+			//if(WS->virtual_address >= USTACKBOTTOM && WS->virtual_address < USTACKTOP) break;
 			if(!(pt_get_page_permissions(faulted_env->env_page_directory,(uint32)WS->virtual_address)&PERM_USED)){
 				cprintf("291\n");
 				if(WS->sweeps_counter==page_WS_max_sweeps)
@@ -316,7 +316,7 @@ void page_fault_handler(struct Env * faulted_env, uint32 fault_va)
 			while(1)
 			{
 				cprintf("318\n");
-				if(ModWS == faulted_env->page_last_WS_element) break;
+				if(ModWS == faulted_env->page_last_WS_element->prev_next_info.le_next) break;
 				if(!(pt_get_page_permissions(faulted_env->env_page_directory,(uint32)WS->virtual_address)&PERM_USED)){
 					cprintf("321\n");
 					if(WS->sweeps_counter==page_WS_max_sweeps)
@@ -326,9 +326,12 @@ void page_fault_handler(struct Env * faulted_env, uint32 fault_va)
 						if((pt_get_page_permissions(faulted_env->env_page_directory,(uint32)WS->virtual_address)&PERM_MODIFIED)){
 							isModified = 1;
 							ModWS = WS;
+							if(LIST_NEXT(WS) == NULL) WS = LIST_FIRST(&faulted_env->page_WS_list);
+							else WS = LIST_NEXT(WS);
 							continue;
 						}
 						isModified=0;
+						ModWS = WS;
 						break;
 
 					}
@@ -354,20 +357,25 @@ void page_fault_handler(struct Env * faulted_env, uint32 fault_va)
 			if(isModified) ptr_frame_info = get_frame_info(faulted_env->env_page_directory,(uint32)ModWS->virtual_address,&page_table_ptr);
 			else ptr_frame_info = get_frame_info(faulted_env->env_page_directory,(uint32)WS->virtual_address,&page_table_ptr);
 			cprintf("355\n");
+			env_page_ws_print(faulted_env);
 			if(isFound){
 				if(isModified) {
+					if(!(WS->virtual_address >= USTACKBOTTOM && WS->virtual_address < USTACKTOP)){
 					int ret = pf_update_env_page(faulted_env, fault_va, ptr_frame_info);
+					}
 				}
 
 			if(WS->virtual_address >= USTACKBOTTOM && WS->virtual_address < USTACKTOP) {
 				int ret = pf_read_env_page(faulted_env,(void*)WS->virtual_address);
 					if(ret == E_PAGE_NOT_EXIST_IN_PF){
-						pf_add_env_page(faulted_env,fault_va,(void*)WS->virtual_address);
+						pf_add_env_page(faulted_env,(uint32)WS->virtual_address,(void*)fault_va);
+						map_frame(faulted_env->env_page_directory,ptr_frame_info,fault_va, PERM_USER | PERM_WRITEABLE);
 					}
 					else{
 						pf_update_env_page(faulted_env, fault_va, ptr_frame_info);
 					}
 				}
+			else{
 				map_frame(faulted_env->env_page_directory,ptr_frame_info,fault_va, PERM_USER | PERM_WRITEABLE);
 				if(isModified){
 					pt_set_page_permissions(faulted_env->env_page_directory,(uint32)ModWS->virtual_address,PERM_USED,0);
@@ -379,6 +387,7 @@ void page_fault_handler(struct Env * faulted_env, uint32 fault_va)
 					WS->virtual_address = (unsigned int) fault_va;
 					WS->sweeps_counter=0;
 				}
+			}
 				if(LIST_NEXT(WS) == NULL) faulted_env->page_last_WS_element = LIST_FIRST(&faulted_env->page_WS_list);
 				else faulted_env->page_last_WS_element = LIST_NEXT(WS);
 			}
