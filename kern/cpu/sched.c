@@ -249,13 +249,11 @@ void sched_init_PRIRR(uint8 numOfPriorities, uint8 quantum, uint32 starvThresh)
 	//TODO: [PROJECT'24.MS3 - #07] [3] PRIORITY RR Scheduler - sched_init_PRIRR
 	//Your code is here
 	//Comment the following line
-	panic("Not implemented yet");
+	//panic("Not implemented yet");
 
-
-
-
-
-
+	starve_threshold = starvThresh;
+	quantums = kmalloc(sizeof(uint32));
+	*quantums = quantum;
 
 
 

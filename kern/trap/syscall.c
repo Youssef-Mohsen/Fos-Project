@@ -344,6 +344,16 @@ void sys_allocate_chunk(uint32 virtual_address, uint32 size, uint32 perms)
 	return;
 }
 
+// NEW FUNCTION: 5at3an and mohannad
+void sys_env_set_priority(int envID, int priority)
+{
+	struct Env* proc ;
+	if (envid2env(envID, &proc, 0) ==  E_BAD_ENV) // not sure about this
+		env_exit();
+
+	env_set_priority(envID, priority);
+}
+
 //2014
 void sys_move_user_mem(uint32 src_virtual_address, uint32 dst_virtual_address, uint32 size)
 {

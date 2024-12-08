@@ -711,7 +711,7 @@ void env_set_priority(int envID, int priority)
 	//Comment the following line
 	//panic("Not implemented yet");
 
-	acquire_spinlock(&ProcessQueues.qlock); // should we lock here or before the if? 
+	acquire_spinlock(&ProcessQueues.qlock); // should we lock here or at the start of the function?
 	int old_priority = proc->priority;
 	if(proc->env_status == ENV_READY && old_priority != priority)
 	{
@@ -729,4 +729,6 @@ void sched_set_starv_thresh(uint32 starvThresh)
 	//Comment the following line
 	//panic("Not implemented yet");
 	
+	// we defined it in sched_helpers.h 
+	starve_threshold = starvThresh;
 }
