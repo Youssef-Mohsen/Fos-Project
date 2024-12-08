@@ -18,13 +18,8 @@ uint32 tablesX[1024] = {0};
 //==================================================================================//
 //============================== GIVEN FUNCTIONS ===================================//
 //==================================================================================//
-<<<<<<< HEAD
-struct Share *get_share(int32 ownerID, char *name);
-
-=======
 struct Share* get_share(int32 ownerID, char* name);
 uint32 isTableExist[1024][6000];
->>>>>>> origin/Mo7sen_2
 //===========================
 // [1] INITIALIZE SHARES:
 //===========================
@@ -154,24 +149,12 @@ int createSharedObject(int32 ownerID, char *shareName, uint32 size, uint8 isWrit
 	// panic("createSharedObject is not implemented yet");
 	// Your Code is Here...
 
-<<<<<<< HEAD
-	struct Env *myenv = get_cpu_proc(); // The calling environment
-	struct Share *existed = get_share(ownerID, shareName);
-	if (existed != NULL)
-		return E_SHARED_MEM_EXISTS;
-	struct Share *created_share = create_share(ownerID, shareName, size, isWritable);
-	if (created_share == NULL)
-		return E_NO_SHARE;
-	uint32 num_pages = ROUNDUP(size, PAGE_SIZE) / PAGE_SIZE;
-
-=======
 	struct Env* myenv = get_cpu_proc(); //The calling environment
 	struct Share* existed = get_share(ownerID,shareName);
 	if(existed != NULL) return E_SHARED_MEM_EXISTS;
 	struct Share* created_share = create_share(ownerID,  shareName,  size,  isWritable);
 	if(created_share == NULL) return E_NO_SHARE;
 	uint32 num_pages = ROUNDUP(size ,PAGE_SIZE) / PAGE_SIZE;
->>>>>>> origin/Mo7sen_2
 	for (int k = 0; k < num_pages; k++)
 	{
 		struct FrameInfo *ptr_frame_info;
@@ -246,25 +229,6 @@ void free_share(struct Share *ptrShare)
 //========================
 // [B2] Free Share Object:
 //========================
-<<<<<<< HEAD
-struct Share *get_Share_id(int32 sharedObjectID, void *va)
-{
-	uint32 id = ((uint32)va << 1) >> 1; // Used for what??
-	cprintf("VA : %x \n", id);
-	struct Share *founded = NULL;
-	acquire_spinlock(&AllShares.shareslock);
-	LIST_FOREACH(founded, &AllShares.shares_list)
-	{
-		cprintf("Found ID : %x - Id : %x \n", founded->ID, sharedObjectID);
-		if (founded->ID == sharedObjectID)
-		{
-			release_spinlock(&AllShares.shareslock);
-			return founded;
-		}
-	}
-	release_spinlock(&AllShares.shareslock);
-	return NULL;
-=======
 struct Share* get_Share_id(int32 sharedObjectID,void * va){
     struct Share* founded = NULL;
         acquire_spinlock(&AllShares.shareslock);
@@ -277,54 +241,10 @@ struct Share* get_Share_id(int32 sharedObjectID,void * va){
         }
         release_spinlock(&AllShares.shareslock);
         return NULL;
->>>>>>> origin/Mo7sen_2
 }
 
 int freeSharedObject(int32 sharedObjectID, void *startVA)
 {
-<<<<<<< HEAD
-	// TODO: [PROJECT'24.MS2 - BONUS#4] [4] SHARED MEMORY [KERNEL SIDE] - freeSharedObject()
-	// COMMENT THE FOLLOWING LINE BEFORE START CODING
-	//    panic("freeSharedObject is not implemented yet");
-	// Your Code is Here...
-	struct Env *myenv = get_cpu_proc();
-	struct Share *ptr_share = get_Share_id(sharedObjectID, startVA);
-	cprintf("245\n");
-	cprintf("Share : %x \n", ptr_share);
-	uint32 no_of_pages = ROUNDUP(ptr_share->size, PAGE_SIZE) / PAGE_SIZE;
-	cprintf("Size : %d \n", ptr_share->size);
-	for (int k = 0; k < no_of_pages; k++)
-	{
-		cprintf("250\n");
-		unmap_frame(myenv->env_page_directory, (uint32)startVA + k * PAGE_SIZE); // is the dir correct?
-		// free_frame(ptr_share->framesStorage[k]);
-	}
-	cprintf("251\n");
-	// if((myenv->env_page_directory[PDX(startVA)])&PERM_USED){
-	cprintf("253\n");
-
-	uint32 *ptr_page_table;
-	int ret = get_page_table(myenv->env_page_directory, (uint32)startVA, &ptr_page_table);
-	cprintf("VA: %x index:%d tablesX:%d\n", startVA, PDX(startVA), tablesX[PDX(startVA)]);
-	if (tablesX[PDX(startVA)]) // must be done in kfree not here?
-		tablesX[PDX(startVA)]--;
-	if (ret != TABLE_NOT_EXIST && tablesX[PDX(startVA)] == 0)
-	{
-		kfree((void *)ptr_page_table);
-	}
-
-	//}
-	cprintf("256\n");
-	ptr_share->references--;
-	if (ptr_share->references < 1)
-	{
-		free_share(ptr_share);
-	}
-	cprintf("ret: %d\n", ret);
-	cprintf("261\n");
-	tlbflush();
-	return 0;
-=======
     //TODO: [PROJECT'24.MS2 - BONUS#4] [4] SHARED MEMORY [KERNEL SIDE] - freeSharedObject()
     //COMMENT THE FOLLOWING LINE BEFORE START CODING
     //panic("freeSharedObject is not implemented yet");
@@ -367,5 +287,4 @@ int freeSharedObject(int32 sharedObjectID, void *startVA)
         }
         tlbflush();
         return 0;
->>>>>>> origin/Mo7sen_2
 }
