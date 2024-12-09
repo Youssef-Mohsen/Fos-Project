@@ -84,7 +84,11 @@ void 	sys_set_uheap_strategy(uint32 heapStrategy);
 int 	sys_pf_calculate_allocated_pages(void);
 
 //Semaphores
-
+struct Env* sys_get_cpu_process();
+void sys_init_queue(struct Env_Queue* queue);
+void sys_enqueue(struct Env_Queue* queue, struct Env* env);
+struct Env* sys_dequeue(struct Env_Queue* queue);
+void sys_sched_insert_ready(struct Env* env);
 
 //Sharing
 //2017
