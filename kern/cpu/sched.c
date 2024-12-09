@@ -355,7 +355,32 @@ struct Env* fos_scheduler_PRIRR()
 	//TODO: [PROJECT'24.MS3 - #08] [3] PRIORITY RR Scheduler - fos_scheduler_PRIRR
 	//Your code is here
 	//Comment the following line
-	panic("Not implemented yet");
+	//panic("Not implemented yet");
+	struct Env* myenv = get_cpu_proc();
+
+	//remove myenv from cpu
+	if(myenv != NULL)
+	{
+		sched_insert_ready(myenv);
+
+		//int priority = myenv->priority;
+		//ProcessQueues.env_ready_queues
+		//myenv->env_status
+	}
+
+	//insert the next env to cpu
+	for(int i = 0 ; i < num_of_ready_queues ; i++)
+	{
+		if(ProcessQueues.env_ready_queues[i].size > 0)
+		{
+			myenv = ProcessQueues.env_ready_queues[i].lh_first;
+			schen_remove_ready(ProcessQueues.env_ready_queues[i].lh_first);
+			goto sayed;
+		}
+	}
+	sayed:
+	*quantums = 0;
+	return myenv;
 }
 
 //========================================
@@ -364,12 +389,37 @@ struct Env* fos_scheduler_PRIRR()
 //========================================
 void clock_interrupt_handler(struct Trapframe* tf)
 {
+	//once the func. is called should assert promoting all needed processes
+	//acquire_spinlock(&ProcessQueues.qlock);
 	if (isSchedMethodPRIRR())
 	{
 		//TODO: [PROJECT'24.MS3 - #09] [3] PRIORITY RR Scheduler - clock_interrupt_handler
 		//Your code is here
 		//Comment the following line
-		panic("Not implemented yet");
+		//panic("Not implemented yet");
+
+		for(int i = 0 ; i < num_of_ready_queues ; i++)
+		{
+			int qsize = ProcessQueues.env_ready_queues[i].size;
+			for(int j = 0 ; j < qsize ; j++)
+			{
+				struct Env *myenv = ProcessQueues.env_ready_queues[i].lh_first;
+
+				if(ticks > starve_threshold) //when is it updated?
+				{
+					if(i != 0)
+					{
+						//acquire_spinlock(&ProcessQueues.qlock);
+						sched_remove_ready(myenv);
+						myenv->priority++;
+						schen_insert_ready(myenv);
+						//release_spinlock(&ProcessQueues.qlock);
+					}
+				}
+				//myenv->nClocks;
+
+			}
+		}
 	}
 
 
