@@ -251,10 +251,19 @@ void sched_init_PRIRR(uint8 numOfPriorities, uint8 quantum, uint32 starvThresh)
 	//Comment the following line
 	//panic("Not implemented yet");
 
+	cprintf("\nProcessQueues.env_ready_queues = %d", ProcessQueues.env_ready_queues);
+	cprintf("\nstarve_threshold = %d", starve_threshold);
+	cprintf("\n*quantums = %d", *quantums);
+
 	ProcessQueues.env_ready_queues = kmalloc(numOfPriorities * sizeof(struct Env_Queue *));
-	starve_threshold = starvThresh;
 	quantums = kmalloc(sizeof(uint32));
 	*quantums = quantum;
+	starve_threshold = starvThresh;
+
+	cprintf("\nProcessQueues.env_ready_queues = %d", ProcessQueues.env_ready_queues);
+	cprintf("\nstarve_threshold = %d", starve_threshold);
+	cprintf("\n*quantums = %d", *quantums);
+
 	//=========================================
 	//DON'T CHANGE THESE LINES=================
 	uint16 cnt0 = kclock_read_cnt0_latch() ; //read after write to ensure it's set to the desired value
