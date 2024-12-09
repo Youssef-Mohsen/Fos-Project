@@ -201,10 +201,10 @@ void *kmalloc(unsigned int size)
 	return ptr;
 }
 
-void* kmalloc2(unsigned int size)
+/*void* kmalloc2(unsigned int size)
 {
-	
-}
+
+}*/
 
 void kfree(void *va)
 {
