@@ -365,8 +365,8 @@ struct Env* fos_scheduler_PRIRR()
 
 		//int priority = myenv->priority;
 		//ProcessQueues.env_ready_queues
-		//myenv->env_status
-	}
+		//myenv->env_status 
+	} 
 
 	//insert the next env to cpu
 	for(int i = 0 ; i < num_of_ready_queues ; i++)
@@ -374,7 +374,7 @@ struct Env* fos_scheduler_PRIRR()
 		if(ProcessQueues.env_ready_queues[i].size > 0)
 		{
 			myenv = ProcessQueues.env_ready_queues[i].lh_first;
-			schen_remove_ready(ProcessQueues.env_ready_queues[i].lh_first);
+			sched_remove_ready(ProcessQueues.env_ready_queues[i].lh_first);
 			goto sayed;
 		}
 	}
@@ -406,7 +406,7 @@ void clock_interrupt_handler(struct Trapframe* tf)
 				struct Env *myenv = ProcessQueues.env_ready_queues[i].lh_first;
 
 				if(ticks > starve_threshold) //when is it updated?
-				{
+				{	
 					if(i != 0)
 					{
 						//acquire_spinlock(&ProcessQueues.qlock);
