@@ -877,7 +877,7 @@ void* create_user_kern_stack(uint32* ptr_user_page_directory)
 
 	uint32* va = kmalloc(KERNEL_STACK_SIZE); //takes free space address
 	uint32 num_pages = ROUNDUP(KERNEL_STACK_SIZE, PAGE_SIZE) / PAGE_SIZE;
-	for (int i=1; i<num_pages; i++)
+	for (int i=0; i<num_pages; i++)
 	{
 		uint32* ptr_page_table = NULL;
 		struct FrameInfo * ptr_FrameInfo = get_frame_info(ptr_page_directory, (uint32)va + i*PAGE_SIZE, &ptr_page_table);

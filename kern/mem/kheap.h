@@ -47,6 +47,7 @@ uint32 start;
 uint32 hard_limit;
 uint32 brk;
 #define KHEAP_PAGE_INDEX(va) (va - hard_limit - PAGE_SIZE) / PAGE_SIZE
+struct spinlock kheaplock;
 uint32 no_pages_alloc[1048576];
 uint32 to_virtual[1048576];
 //uint32 isTableExist[1024][6000];

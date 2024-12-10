@@ -24,12 +24,11 @@ inline struct WorkingSetElement* env_page_ws_list_create_element(struct Env* e, 
 	void* retK = kmalloc(sizeof(struct WorkingSetElement));
 	if (retK==NULL) panic("env_page_ws_list_create_element failed no mem");
 	struct WorkingSetElement* element =(struct WorkingSetElement*)retK;
-	element->virtual_address=ROUNDDOWN(virtual_address,PAGE_SIZE);
+	element->virtual_address=virtual_address;
 	element->empty=0;
 	element->time_stamp=0;
 	element->sweeps_counter=0;
 	return element;
-
 }
 inline void env_page_ws_invalidate(struct Env* e, uint32 virtual_address)
 {

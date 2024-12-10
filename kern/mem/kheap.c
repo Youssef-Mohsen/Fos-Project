@@ -14,11 +14,15 @@
 
 
 
+
 int initialize_kheap_dynamic_allocator(uint32 daStart, uint32 initSizeToAllocate, uint32 daLimit)
 {
 	//TODO: [PROJECT'24.MS2 - #01] [1] KERNEL HEAP - initialize_kheap_dynamic_allocator
 	// Write your code here, remove the panic and write your code
 	//panic("initialize_kheap_dynamic_allocator() is not implemented yet...!!");
+
+	init_spinlock(&kheaplock,"kheaplock");
+
 	start = daStart;
 	hard_limit = daLimit;
 	brk = daStart + initSizeToAllocate;
@@ -115,6 +119,9 @@ bool isPageAllocated(uint32 *ptr_page_directory, const uint32 virtual_address)
 	return 1;
 }
 
+
+
+
 void *kmalloc(unsigned int size)
 {
 	// TODO: [PROJECT'24.MS2 - #03] [1] KERNEL HEAP - kmalloc
@@ -126,6 +133,7 @@ void *kmalloc(unsigned int size)
 	uint32 max_no_of_pages = ROUNDUP((uint32)KERNEL_HEAP_MAX - hard_limit + (uint32)PAGE_SIZE ,PAGE_SIZE) / PAGE_SIZE;
 
 	void *ptr = NULL;
+	acquire_spinlock(&kheaplock);
 	if (size <= DYN_ALLOC_MAX_BLOCK_SIZE)
 	{
 		if (isKHeapPlacementStrategyFIRSTFIT())
@@ -145,7 +153,7 @@ void *kmalloc(unsigned int size)
 				uint32 cnt = 0;
 				while(cnt < num_pages - 1)
 				{
-					if(j >= (uint32)KERNEL_HEAP_MAX) return NULL;
+					if(j >= (uint32)KERNEL_HEAP_MAX) {release_spinlock(&kheaplock); return NULL;}
 					if (isPageAllocated(ptr_page_directory, j))
 					{
 
@@ -167,7 +175,7 @@ void *kmalloc(unsigned int size)
 			i += (uint32)PAGE_SIZE; // <-- changed, was i++
 		}
 
-		if(!ok) return NULL;
+		if(!ok) {release_spinlock(&kheaplock); return NULL;}
 		for (int k = 0; k < num_pages; k++)
 		{
 			struct FrameInfo *ptr_frame_info;
@@ -181,6 +189,7 @@ void *kmalloc(unsigned int size)
 			}
 			else
 			{
+				release_spinlock(&kheaplock);
 				panic("No Memory");
 			}
 		}
@@ -195,9 +204,10 @@ void *kmalloc(unsigned int size)
 	}
 	else
 	{
-
+		release_spinlock(&kheaplock);
 		return NULL;
 	}
+	release_spinlock(&kheaplock);
 	return ptr;
 }
 
@@ -209,10 +219,14 @@ void kfree(void *va)
 
     // you need to get the size of the given allocation using its address
     // refer to the project presentation and documentation for details
+	acquire_spinlock(&kheaplock);
     uint32 pageA_start = hard_limit + PAGE_SIZE;
     if((uint32)va < hard_limit){
+
         free_block(va);
-    } else if((uint32)va >= pageA_start && (uint32)va < KERNEL_HEAP_MAX){
+        release_spinlock(&kheaplock);
+    }
+    else if((uint32)va >= pageA_start && (uint32)va < KERNEL_HEAP_MAX){
     	uint32 no_of_pages = no_pages_alloc[KHEAP_PAGE_INDEX((uint32)va)];
 		for(int i = 0; i < no_of_pages; i++){
 			uint32 pa = kheap_physical_address((uint32)va + i*PAGE_SIZE);
@@ -222,9 +236,13 @@ void kfree(void *va)
 			//cprintf("kfree Page Index1 : %d\n",isTableExist[PDX((uint32)((uint32)va + (i * PAGE_SIZE)))]);
 			//cprintf(" kfree Index1 : %d\n",PDX((uint32)((uint32)va + (i * PAGE_SIZE))));
 		}
-    } else{
+		release_spinlock(&kheaplock);
+    }
+    else{
+    	release_spinlock(&kheaplock);
         panic("kfree: The virtual Address is invalid");
     }
+
 }
 
 unsigned int kheap_physical_address(unsigned int va)
