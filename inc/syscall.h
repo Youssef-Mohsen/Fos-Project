@@ -60,6 +60,7 @@ enum
 	SYS_sched_insert_ready,
 	SYS_acquire,
 	SYS_release,
+	SYS_sched,
 	NSYSCALLS
 };
 

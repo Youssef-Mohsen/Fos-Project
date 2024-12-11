@@ -91,7 +91,7 @@ struct Env* sys_dequeue(struct Env_Queue* queue);
 void sys_sched_insert_ready(struct Env* env);
 void sys_acquire();
 void sys_release();
-
+void sys_sched();
 //Sharing
 //2017
 int 	sys_createSharedObject(char* shareName, uint32 size, uint8 isWritable, void* virtual_address);

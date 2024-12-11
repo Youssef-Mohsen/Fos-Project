@@ -388,6 +388,9 @@ void sys_acquire(){
 void sys_release(){
 	release_spinlock(&ProcessQueues.qlock);
 }
+void sys_sched(void){
+	sched();
+}
 /*******************************/
 /* SHARED MEMORY SYSTEM CALLS */
 /*******************************/
@@ -744,6 +747,10 @@ uint32 syscall(uint32 syscallno, uint32 a1, uint32 a2, uint32 a3, uint32 a4, uin
 		sys_release();
 		return 0;
 		break;
+	case SYS_sched:
+		 sys_sched();
+		 return 0;
+		 break;
 	case NSYSCALLS:
 		return 	-E_INVAL;
 		break;
