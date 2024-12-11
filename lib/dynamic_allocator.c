@@ -352,8 +352,8 @@ void *alloc_block_BF(uint32 size)
 			else {
 				end_block = (struct Block_Start_End*) (new_mem + ROUNDUP(required_size, PAGE_SIZE)-sizeof(int));
 				end_block->info = 1;
-				cprintf("251\n");
-			cprintf("address : %x\n",new_mem);
+				
+			
 			set_block_data(new_mem, ROUNDUP(required_size, PAGE_SIZE), 1);
 			free_block(new_mem);
 			return alloc_block_BF(size);
@@ -543,7 +543,7 @@ void *realloc_block_FF(void* va, uint32 new_size)
 				set_block_data(next_new_va, remaining_size, 0);
 				return va;
 			}
-			cprintf("16\n");
+			
 		}
 		return va;
 	}

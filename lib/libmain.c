@@ -6,6 +6,7 @@
 extern void _main(int argc, char **argv);
 
 volatile struct Env *myEnv = NULL;
+
 volatile char *binaryname = "(PROGRAM NAME UNKNOWN)";
 void
 libmain(int argc, char **argv)

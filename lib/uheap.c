@@ -17,9 +17,8 @@ void* sbrk(int increment)
 }
 uint32 no_pages_marked[NUM_OF_UHEAP_PAGES];
 bool isPageMarked[NUM_OF_UHEAP_PAGES];
-int32 ids[1024][2052];
-int32 id_index[NUM_OF_UHEAP_PAGES];
-uint32 shared_index=0;
+int32 ids[NUM_OF_UHEAP_PAGES];
+
 //=================================
 // [2] ALLOCATE SPACE IN USER HEAP:
 //=================================
@@ -48,7 +47,7 @@ void* malloc(uint32 size)
 	{
 		if (sys_isUHeapPlacementStrategyFIRSTFIT())
 		{
-			//cprintf("47\n");
+			
 			ptr = alloc_block_FF(size);
 		}
 		else if (sys_isUHeapPlacementStrategyBESTFIT())
@@ -56,25 +55,25 @@ void* malloc(uint32 size)
 	}
 	else if(num_pages < max_no_of_pages-1) // the else statement in kern/mem/kheap.c/kmalloc is wrong, rewrite it to be correct.
 	{
-		//cprintf("52\n");
+		
 		uint32 i = myEnv->heap_hard_limit + PAGE_SIZE;											// start: hardlimit + 4  ______ end: KERNEL_HEAP_MAX
 		bool ok = 0;
 		while (i < (uint32)USER_HEAP_MAX)
 		{
-			//cprintf("57\n");
+			
 			if (!isPageMarked[UHEAP_PAGE_INDEX(i)])
 			{
-				//cprintf("60\n");
+				
 				uint32 j = i + (uint32)PAGE_SIZE;
 				uint32 cnt = 0;
 
-				//cprintf("64\n");
+				
 				while(cnt < num_pages - 1)
 				{
 					if(j >= (uint32)USER_HEAP_MAX) return NULL;
 					if (isPageMarked[UHEAP_PAGE_INDEX(j)])
 					{
-						//cprintf("71\n");
+						
 						i = j;
 						goto sayed;
 					}
@@ -88,7 +87,7 @@ void* malloc(uint32 size)
 				{
 					isPageMarked[UHEAP_PAGE_INDEX((k*PAGE_SIZE)+i)]=1;
 				}
-				//cprintf("79\n");
+				
 
 			}
 			sayed:
@@ -100,7 +99,7 @@ void* malloc(uint32 size)
 		ptr = (void*)i;
 		no_pages_marked[UHEAP_PAGE_INDEX(i)] = num_pages;
 		sys_allocate_user_mem(i, size);
-		//cprintf("91\n");
+		
 	}
 	else
 	{
@@ -150,15 +149,15 @@ void* smalloc(char *sharedVarName, uint32 size, uint8 isWritable)
 	//TODO: [PROJECT'24.MS2 - #18] [4] SHARED MEMORY [USER SIDE] - smalloc()
 	// Write your code here, remove the panic and write your code
 	//panic("smalloc() is not implemented yet...!!");
-	size = MAX(size,PAGE_SIZE);
-	void *ptr = malloc(size);
+
+	void *ptr = malloc(MAX(size,PAGE_SIZE));
 	if(ptr == NULL) return NULL;
 	 int32 ret = sys_createSharedObject(sharedVarName, size,  isWritable, ptr);
 	 if(ret == E_NO_SHARE || ret == E_SHARED_MEM_EXISTS) return NULL;
-	 cprintf("Smalloc : %x \n",ptr);
+	 //cprintf("Smalloc : %x \n",ptr);
 
-	 id_index[UHEAP_PAGE_INDEX((uint32)ptr)] = ++shared_index;
-	 ids[ id_index[UHEAP_PAGE_INDEX((uint32)ptr)] ][myEnv->env_id] = ret;
+
+	 ids[UHEAP_PAGE_INDEX((uint32)ptr)] =  ret;
 	 return ptr;
 }
 
@@ -175,9 +174,8 @@ void* sget(int32 ownerEnvID, char *sharedVarName)
 	void * ptr = malloc(MAX(size,PAGE_SIZE));
 	if(ptr == NULL) return NULL;
 	int32 ret = sys_getSharedObject(ownerEnvID,sharedVarName,ptr);
-	id_index[UHEAP_PAGE_INDEX((uint32)ptr)] = ++shared_index;
-	ids[ id_index[UHEAP_PAGE_INDEX((uint32)ptr)] ][myEnv->env_id] = ret;
-	cprintf("Env Id : %d\n",myEnv->env_id);
+	ids[UHEAP_PAGE_INDEX((uint32)ptr)] =  ret;
+	
 	if(ret == E_SHARED_MEM_NOT_EXISTS ) return NULL;
 	return ptr;
 }
@@ -203,7 +201,7 @@ void sfree(void* virtual_address)
     //TODO: [PROJECT'24.MS2 - BONUS#4] [4] SHARED MEMORY [USER SIDE] - sfree()
     // Write your code here, remove the panic and write your code
 //    panic("sfree() is not implemented yet...!!");
-	int32 id = ids[id_index[UHEAP_PAGE_INDEX((uint32)virtual_address)]][myEnv->env_id];
+	int32 id = ids[UHEAP_PAGE_INDEX((uint32)virtual_address)];
     int ret = sys_freeSharedObject(id,virtual_address);
 }
 
