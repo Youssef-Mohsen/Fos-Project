@@ -89,6 +89,8 @@ void sys_init_queue(struct Env_Queue* queue);
 void sys_enqueue(struct Env_Queue* queue, struct Env* env);
 struct Env* sys_dequeue(struct Env_Queue* queue);
 void sys_sched_insert_ready(struct Env* env);
+void sys_acquire();
+void sys_release();
 
 //Sharing
 //2017

@@ -58,6 +58,8 @@ enum
 	SYS_enqueue,
 	SYS_dequeue,
 	SYS_sched_insert_ready,
+	SYS_acquire,
+	SYS_release,
 	NSYSCALLS
 };
 

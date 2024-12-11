@@ -9,16 +9,18 @@ struct semaphore create_semaphore(char *semaphoreName, uint32 value)
 //	panic("create_semaphore is not implemented yet");
 	//Your Code is Here...
 
-		void* ret = smalloc(semaphoreName, sizeof(struct semaphore), 1);
+		cprintf("12\n");
+		void* ret = smalloc(semaphoreName,(uint32) sizeof(struct semaphore), 1);
 	    if (ret == NULL ) panic("no memory in creat_semaphore");
-
+	    cprintf("15\n");
 	    struct semaphore* sem_ptr = (struct semaphore*)ret;
-
-	    sem_ptr->semdata->count = value;
+	    cprintf("17\n");
+	    sem_ptr->semdata->count = 0;
+	    cprintf("19\n");
 	    sys_init_queue(&(sem_ptr->semdata->queue));
-
+	    cprintf("21\n");
 	    sem_ptr->semdata->lock = 0;
-
+	    cprintf("23\n");
 	    return *sem_ptr;
 }
 struct semaphore get_semaphore(int32 ownerEnvID, char* semaphoreName)
@@ -47,11 +49,11 @@ void wait_semaphore(struct semaphore sem)
 
 	    	struct Env* cur_env = sys_get_cpu_process();
 
-//	    	acquire_spinlock(&ProcessQueues.qlock); //acquire procque
+	    	sys_acquire();
 	        sys_enqueue(&(sem.semdata->queue),cur_env);  // Add process to waiting queue
 	        cur_env->env_status= ENV_BLOCKED;
 	        sem.semdata->lock = 0;
-//	        release_spinlock(&ProcessQueues.qlock); //release procque
+	        sys_release();
 
 	    } else
 	    	sem.semdata->lock = 0;
@@ -66,12 +68,13 @@ void signal_semaphore(struct semaphore sem)
 	//Your Code is Here...
 		uint32 key = 1;
 	    do { xchg(&sem.semdata->lock,key ); } while (key != 0);
+
 	    sem.semdata->count++;
 	    if (sem.semdata->count <= 0) {
 	        struct Env* env = sys_dequeue(&(sem.semdata->queue)) ;
 	        sys_sched_insert_ready(env);
 	    }
-	    sem.semdata->lock = 0;
+	    sem.semdata->lock = 0;//release
 }
 
 int semaphore_count(struct semaphore sem)

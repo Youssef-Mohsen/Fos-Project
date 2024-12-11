@@ -382,6 +382,12 @@ struct Env* sys_dequeue(struct Env_Queue* queue)
 void sys_sched_insert_ready(struct Env* env){
 	sched_insert_ready(env);
 }
+void sys_acquire(){
+	acquire_spinlock(&ProcessQueues.qlock);
+}
+void sys_release(){
+	release_spinlock(&ProcessQueues.qlock);
+}
 /*******************************/
 /* SHARED MEMORY SYSTEM CALLS */
 /*******************************/
@@ -730,6 +736,14 @@ uint32 syscall(uint32 syscallno, uint32 a1, uint32 a2, uint32 a3, uint32 a4, uin
 	case SYS_dequeue:
 			return (uint32) sys_dequeue((struct Env_Queue*) a1);
 			break;
+	case SYS_acquire:
+		sys_acquire();
+		return 0;
+		break;
+	case SYS_release:
+		sys_release();
+		return 0;
+		break;
 	case NSYSCALLS:
 		return 	-E_INVAL;
 		break;

@@ -6,23 +6,24 @@ void
 _main(void)
 {
 	int envID = sys_getenvid();
-
+	cprintf("9\n");
 	struct semaphore cs1 = create_semaphore("cs1", 1);
+	cprintf("11\n");
 	struct semaphore depend1 = create_semaphore("depend1", 0);
-
+	cprintf("13\n");
 	int id1, id2, id3;
 	id1 = sys_create_env("sem1Slave", (myEnv->page_WS_max_size),(myEnv->SecondListSize), (myEnv->percentage_of_WS_pages_to_be_removed));
 	id2 = sys_create_env("sem1Slave", (myEnv->page_WS_max_size), (myEnv->SecondListSize),(myEnv->percentage_of_WS_pages_to_be_removed));
 	id3 = sys_create_env("sem1Slave", (myEnv->page_WS_max_size), (myEnv->SecondListSize),(myEnv->percentage_of_WS_pages_to_be_removed));
-
+	cprintf("18\n");
 	sys_run_env(id1);
 	sys_run_env(id2);
 	sys_run_env(id3);
-
+	cprintf("22\n");
 	wait_semaphore(depend1);
 	wait_semaphore(depend1);
 	wait_semaphore(depend1);
-
+	cprintf("26\n");
 	int sem1val = semaphore_count(cs1);
 	int sem2val = semaphore_count(depend1);
 	if (sem2val == 0 && sem1val == 1)

@@ -348,3 +348,11 @@ void sys_sched_insert_ready( struct Env* env){
 	syscall(SYS_sched_insert_ready,(uint32)env,0,0,0,0);
 	return;
 }
+void sys_acquire(){
+	syscall(SYS_acquire,0,0,0,0,0);
+	return;
+}
+void sys_release(){
+	syscall(SYS_release,0,0,0,0,0);
+	return;
+}
