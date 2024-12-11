@@ -19,13 +19,9 @@ _main(void)
 	sys_run_env(id1);
 	sys_run_env(id2);
 	sys_run_env(id3);
-	cprintf("22\n");
 	wait_semaphore(depend1);
-	cprintf("24\n");
 	wait_semaphore(depend1);
-	cprintf("26\n");
 	wait_semaphore(depend1);
-	cprintf("28\n");
 	int sem1val = semaphore_count(cs1);
 	int sem2val = semaphore_count(depend1);
 	if (sem2val == 0 && sem1val == 1)

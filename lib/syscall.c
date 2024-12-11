@@ -321,19 +321,12 @@ void sys_allocate_user_mem(uint32 virtual_address, uint32 size)
 	syscall(SYS_allocate_user_mem,virtual_address,size,0,0,0);
 	return;
 }
-
-struct Env* sys_get_cpu_process()
-{
-   struct Env* syscall_return ;
-   syscall_return  = ( struct Env*)syscall(SYS_get_cpu_process,0,0,0,0,0);
-   return syscall_return ;
-}
 void sys_init_queue(struct Env_Queue*queue){
 	syscall(SYS_init_queue,(uint32)queue,0,0,0,0);
 	return;
 }
-void sys_enqueue(struct Env_Queue* queue, struct Env* env){
-	syscall(SYS_enqueue,(uint32)queue,(uint32)env,0,0,0);
+void sys_enqueue(struct Env_Queue* queue){
+	syscall(SYS_enqueue,(uint32)queue,0,0,0,0);
 	return;
 }
 
@@ -356,7 +349,7 @@ void sys_release(){
 	syscall(SYS_release,0,0,0,0,0);
 	return;
 }
-void sys_sched(){
-	syscall(SYS_sched,0,0,0,0,0);
+void sys_sched(uint32* lock){
+	syscall(SYS_sched,(uint32)lock,0,0,0,0);
 	return;
 }

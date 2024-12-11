@@ -33,10 +33,10 @@ struct semaphore get_semaphore(int32 ownerEnvID, char* semaphoreName)
 	//Your Code is Here...
 		void* ret = sget(ownerEnvID, semaphoreName);
 		if (ret == NULL ) panic("no semaphore in get_semaphore");
-	    struct __semdata* sem_ptr = (struct __semdata*)ret;
-	    struct semaphore sem;
-	       sem.semdata = sem_ptr;
-	       return sem;
+		struct __semdata* sem_ptr = (struct __semdata*)ret;
+		struct semaphore sem;
+	   sem.semdata = sem_ptr;
+	   return sem;
 }
 
 void wait_semaphore(struct semaphore sem)
@@ -45,35 +45,25 @@ void wait_semaphore(struct semaphore sem)
 	//COMMENT THE FOLLOWING LINE BEFORE START CODING
 //	panic("wait_semaphore is not implemented yet");
 	//Your Code is Here...
-		cprintf("48\n");
-		  while (xchg(&(sem.semdata->lock),1) != 0);
-
-
-		    cprintf("50\n");
-		    sem.semdata->count--;
-		    cprintf("52\n");
+//		cprintf("48\n");
+		while(xchg(&(sem.semdata->lock),1) != 0);
+//		cprintf("50\n");
+		sem.semdata->count--;
+//		cprintf("52\n");
 	    if (sem.semdata->count < 0) {
-
+//	    	cprintf("54\n");
 	    	sys_acquire();
-	    	cprintf("57\n");
-	    	struct Env* cur_env = sys_get_cpu_process();
-	    	cprintf("59\n");
-	        sys_enqueue(&(sem.semdata->queue),cur_env);  // Add process to waiting queue
-	        cprintf("61\n");
-	        sem.semdata->lock = 0;
-	        cprintf("66\n");
-	        cur_env->env_status= ENV_BLOCKED;
-	        cprintf("68\n");
-	        sys_sched();
-	        cprintf("70\n");
+//	    	cprintf("58\n");
+	        sys_enqueue(&(sem.semdata->queue));  // Add process to waiting queue
+	        //now, all inside sched
+	        sys_sched(&sem.semdata->lock);
+//	        cprintf("70\n");
 	        sys_release();
-	        cprintf("72\n");
-
-	    } else{
-	    	cprintf("75\n");
-	    	sem.semdata->lock = 0;
+	        sem.semdata->lock = 1;
+//	        cprintf("72\n");
 	    }
-
+//		cprintf("75\n");
+		sem.semdata->lock = 0;
 }
 
 void signal_semaphore(struct semaphore sem)
@@ -82,15 +72,20 @@ void signal_semaphore(struct semaphore sem)
 	//COMMENT THE FOLLOWING LINE BEFORE START CODING
 //	panic("signal_semaphore is not implemented yet");
 	//Your Code is Here...
-		uint32 key = 1;
-	    do { xchg(&sem.semdata->lock,key ); } while (key != 0);
-
-	    sem.semdata->count++;
-	    if (sem.semdata->count <= 0) {
-	        struct Env* env = sys_dequeue(&(sem.semdata->queue)) ;
-	        sys_sched_insert_ready(env);
-	    }
-	    sem.semdata->lock = 0;//release
+//	cprintf("signal::78\n");
+	while(xchg(&(sem.semdata->lock),1) != 0);
+//	cprintf("signal::81\n");
+	sem.semdata->count++;
+	if (sem.semdata->count <= 0) {
+//		cprintf("signal::84\n");
+		sys_acquire();
+		struct Env* env = sys_dequeue(&(sem.semdata->queue));
+//		cprintf("signal::86\n");
+		sys_sched_insert_ready(env);
+		sys_release();
+	}
+//	cprintf("signal::89\n");
+	sem.semdata->lock = 0;//release
 }
 
 int semaphore_count(struct semaphore sem)

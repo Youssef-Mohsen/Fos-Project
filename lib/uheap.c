@@ -47,7 +47,7 @@ void* malloc(uint32 size)
 	{
 		if (sys_isUHeapPlacementStrategyFIRSTFIT())
 		{
-			
+
 			ptr = alloc_block_FF(size);
 		}
 		else if (sys_isUHeapPlacementStrategyBESTFIT())
@@ -55,25 +55,25 @@ void* malloc(uint32 size)
 	}
 	else if(num_pages < max_no_of_pages-1) // the else statement in kern/mem/kheap.c/kmalloc is wrong, rewrite it to be correct.
 	{
-		
+
 		uint32 i = myEnv->heap_hard_limit + PAGE_SIZE;											// start: hardlimit + 4  ______ end: KERNEL_HEAP_MAX
 		bool ok = 0;
 		while (i < (uint32)USER_HEAP_MAX)
 		{
-			
+
 			if (!isPageMarked[UHEAP_PAGE_INDEX(i)])
 			{
-				
+
 				uint32 j = i + (uint32)PAGE_SIZE;
 				uint32 cnt = 0;
 
-				
+
 				while(cnt < num_pages - 1)
 				{
 					if(j >= (uint32)USER_HEAP_MAX) return NULL;
 					if (isPageMarked[UHEAP_PAGE_INDEX(j)])
 					{
-						
+
 						i = j;
 						goto sayed;
 					}
@@ -87,7 +87,7 @@ void* malloc(uint32 size)
 				{
 					isPageMarked[UHEAP_PAGE_INDEX((k*PAGE_SIZE)+i)]=1;
 				}
-				
+
 
 			}
 			sayed:
@@ -99,7 +99,7 @@ void* malloc(uint32 size)
 		ptr = (void*)i;
 		no_pages_marked[UHEAP_PAGE_INDEX(i)] = num_pages;
 		sys_allocate_user_mem(i, size);
-		
+
 	}
 	else
 	{
@@ -175,7 +175,7 @@ void* sget(int32 ownerEnvID, char *sharedVarName)
 	if(ptr == NULL) return NULL;
 	int32 ret = sys_getSharedObject(ownerEnvID,sharedVarName,ptr);
 	ids[UHEAP_PAGE_INDEX((uint32)ptr)] =  ret;
-	
+
 	if(ret == E_SHARED_MEM_NOT_EXISTS ) return NULL;
 	return ptr;
 }
