@@ -356,3 +356,7 @@ void sys_release(){
 	syscall(SYS_release,0,0,0,0,0);
 	return;
 }
+void sys_sched(){
+	syscall(SYS_sched,0,0,0,0,0);
+	return;
+}
