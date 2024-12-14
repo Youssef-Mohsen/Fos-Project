@@ -45,25 +45,12 @@ void wait_semaphore(struct semaphore sem)
 	//COMMENT THE FOLLOWING LINE BEFORE START CODING
 //	panic("wait_semaphore is not implemented yet");
 	//Your Code is Here...
-//		cprintf("48\n");
-		while(xchg(&(sem.semdata->lock),1) != 0);
-//		cprintf("50\n");
-		sem.semdata->count--;
-//		cprintf("52\n");
-	    if (sem.semdata->count < 0) {
-//	    	cprintf("54\n");
-	    	sys_acquire();
-//	    	cprintf("58\n");
-	        sys_enqueue(&(sem.semdata->queue));  // Add process to waiting queue
-	        //now, all inside sched
-	        sys_sched(&sem.semdata->lock);
-//	        cprintf("70\n");
-	        sys_release();
-	        sem.semdata->lock = 1;
-//	        cprintf("72\n");
-	    }
-//		cprintf("75\n");
-		sem.semdata->lock = 0;
+	while(xchg(&(sem.semdata->lock),1) != 0);
+	sem.semdata->count--;
+	if (semaphore_count(sem) < 0) {
+		sys_wait(&(sem.semdata->queue), &sem.semdata->lock);
+	}
+	sem.semdata->lock = 0;
 }
 
 void signal_semaphore(struct semaphore sem)
@@ -72,20 +59,12 @@ void signal_semaphore(struct semaphore sem)
 	//COMMENT THE FOLLOWING LINE BEFORE START CODING
 //	panic("signal_semaphore is not implemented yet");
 	//Your Code is Here...
-//	cprintf("signal::78\n");
 	while(xchg(&(sem.semdata->lock),1) != 0);
-//	cprintf("signal::81\n");
 	sem.semdata->count++;
-	if (sem.semdata->count <= 0) {
-//		cprintf("signal::84\n");
-		sys_acquire();
-		struct Env* env = sys_dequeue(&(sem.semdata->queue));
-//		cprintf("signal::86\n");
-		sys_sched_insert_ready(env);
-		sys_release();
+	if (semaphore_count(sem) <= 0) {
+		sys_signal(&(sem.semdata->queue));
 	}
-//	cprintf("signal::89\n");
-	sem.semdata->lock = 0;//release
+	sem.semdata->lock = 0;
 }
 
 int semaphore_count(struct semaphore sem)

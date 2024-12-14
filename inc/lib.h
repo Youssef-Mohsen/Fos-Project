@@ -85,12 +85,8 @@ int 	sys_pf_calculate_allocated_pages(void);
 
 //Semaphores
 void sys_init_queue(struct Env_Queue* queue);
-void sys_enqueue(struct Env_Queue* queue);
-struct Env* sys_dequeue(struct Env_Queue* queue);
-void sys_sched_insert_ready(struct Env* env);
-void sys_acquire();
-void sys_release();
-void sys_sched(uint32* lock);
+void sys_wait(struct Env_Queue* queue, uint32* lock);
+void sys_signal(struct Env_Queue* queue);
 //Sharing
 //2017
 int 	sys_createSharedObject(char* shareName, uint32 size, uint8 isWritable, void* virtual_address);

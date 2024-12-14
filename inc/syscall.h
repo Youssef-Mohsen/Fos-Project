@@ -55,12 +55,8 @@ enum
 	//=====================================================================
 	SYS_get_cpu_process,
 	SYS_init_queue,
-	SYS_enqueue,
-	SYS_dequeue,
-	SYS_sched_insert_ready,
-	SYS_acquire,
-	SYS_release,
-	SYS_sched,
+	SYS_wait,
+	SYS_signal,
 	NSYSCALLS
 };
 
