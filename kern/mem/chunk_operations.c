@@ -207,7 +207,22 @@ void free_user_mem(struct Env* e, uint32 virtual_address, uint32 size)
 
 		pt_set_page_permissions(e->env_page_directory,(size*PAGE_SIZE)+virtual_address,0,PERM_MARKED);
 		int ret = pf_read_env_page(e,(void*)((size*PAGE_SIZE)+virtual_address));
-		if(ret == E_PAGE_NOT_EXIST_IN_PF) env_page_ws_invalidate(e, (size*PAGE_SIZE)+virtual_address);
+		if(ret == E_PAGE_NOT_EXIST_IN_PF) {
+			env_page_ws_invalidate(e, (size*PAGE_SIZE)+virtual_address);
+			struct WorkingSetElement *wse;
+			LIST_FOREACH(wse, &(e->page_WS_list))
+			{
+				if (e->page_last_WS_element == wse||e->page_last_WS_element==NULL)
+				{
+					break;
+				}
+				else
+				{
+					LIST_REMOVE(&(e->page_WS_list),wse);
+					LIST_INSERT_TAIL(&(e->page_WS_list),wse);
+				}
+			}
+		}
 		else pf_remove_env_page(e, (size*PAGE_SIZE)+virtual_address);
 
 
