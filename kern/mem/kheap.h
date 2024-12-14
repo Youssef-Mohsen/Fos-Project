@@ -51,6 +51,6 @@ uint32 brk;
 struct spinlock kheaplock;
 uint32 no_pages_alloc[1048576];
 uint32 to_virtual[1048576];
-//uint32 isTableExist[1024][6000];
+struct spinlock kheaplock;
 
 #endif // FOS_KERN_KHEAP_H_
