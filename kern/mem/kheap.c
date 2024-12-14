@@ -14,7 +14,6 @@
 
 
 
-
 int initialize_kheap_dynamic_allocator(uint32 daStart, uint32 initSizeToAllocate, uint32 daLimit)
 {
 	//TODO: [PROJECT'24.MS2 - #01] [1] KERNEL HEAP - initialize_kheap_dynamic_allocator
@@ -210,6 +209,11 @@ void *kmalloc(unsigned int size)
 	release_spinlock(&kheaplock);
 	return ptr;
 }
+
+/*void* kmalloc2(unsigned int size)
+{
+
+}*/
 
 void kfree(void *va)
 {

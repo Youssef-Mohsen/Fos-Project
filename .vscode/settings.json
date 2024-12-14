@@ -2,6 +2,12 @@
     "files.associations": {
         "memory_manager.h": "c",
         "memlayout.h": "c",
-        "kheap.h": "c"
+        "kheap.h": "c",
+        "pagefile_manager.h": "c",
+        "utilities.h": "c",
+        "shared_memory_manager.h": "c",
+        "types.h": "c",
+        "queue.h": "c",
+        "dynamic_allocator.h": "c"
     }
 }

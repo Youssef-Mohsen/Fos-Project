@@ -144,7 +144,7 @@ void sched_insert_ready0(struct Env* env)
 //============================================================
 // [2] Insert the given Env in the priority-based Ready Queue:
 //============================================================
-void sched_insert_ready(struct Env* env)
+void sched_insert_ready(struct Env* env) // !!!! replace usage of sched_insert_ready0 with this !!!
 {
 	/*To protect process Qs (or info of current process) in multi-CPU*/
 	if(!holding_spinlock(&ProcessQueues.qlock))
@@ -709,7 +709,17 @@ void env_set_priority(int envID, int priority)
 
 	//Your code is here
 	//Comment the following line
-	panic("Not implemented yet");
+	//panic("Not implemented yet");
+
+	acquire_spinlock(&ProcessQueues.qlock); // should we lock here or at the start of the function?
+	int old_priority = proc->priority;
+	if(proc->env_status == ENV_READY && old_priority != priority)
+	{
+		sched_remove_ready(proc);
+		proc->priority = priority;
+		sched_insert_ready(proc);
+	}
+	release_spinlock(&ProcessQueues.qlock);
 }
 
 void sched_set_starv_thresh(uint32 starvThresh)
@@ -717,5 +727,8 @@ void sched_set_starv_thresh(uint32 starvThresh)
 	//TODO: [PROJECT'24.MS3 - #06] [3] PRIORITY RR Scheduler - sched_set_starv_thresh
 	//Your code is here
 	//Comment the following line
-	panic("Not implemented yet");
+	//panic("Not implemented yet");
+	
+	// we defined it in sched_helpers.h 
+	starve_threshold = starvThresh;
 }
