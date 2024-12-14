@@ -168,9 +168,7 @@ int createSharedObject(int32 ownerID, char *shareName, uint32 size, uint8 isWrit
 	acquire_spinlock(&AllShares.shareslock);
 	LIST_INSERT_TAIL(&AllShares.shares_list, created_share);
 	release_spinlock(&AllShares.shareslock);
-	cprintf("175\n");
 	tablesX[PDX(virtual_address)]++;
-	cprintf("VA: %x index:%d tablesX: %d\n", virtual_address, PDX(virtual_address)), tablesX[PDX(virtual_address)];
 	return created_share->ID;
 }
 

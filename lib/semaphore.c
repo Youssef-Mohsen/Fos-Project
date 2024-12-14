@@ -47,7 +47,7 @@ void wait_semaphore(struct semaphore sem)
 	//Your Code is Here...
 	while(xchg(&(sem.semdata->lock),1) != 0);
 	sem.semdata->count--;
-	if (semaphore_count(sem) < 0) {
+	if (sem.semdata->count < 0) {
 		sys_wait(&(sem.semdata->queue), &sem.semdata->lock);
 	}
 	sem.semdata->lock = 0;
@@ -61,7 +61,7 @@ void signal_semaphore(struct semaphore sem)
 	//Your Code is Here...
 	while(xchg(&(sem.semdata->lock),1) != 0);
 	sem.semdata->count++;
-	if (semaphore_count(sem) <= 0) {
+	if (sem.semdata->count <= 0) {
 		sys_signal(&(sem.semdata->queue));
 	}
 	sem.semdata->lock = 0;

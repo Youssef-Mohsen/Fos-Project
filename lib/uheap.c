@@ -155,8 +155,6 @@ void *smalloc(char *sharedVarName, uint32 size, uint8 isWritable)
 	if(ptr == NULL) return NULL;
 	 int32 ret = sys_createSharedObject(sharedVarName, size,  isWritable, ptr);
 	 if(ret == E_NO_SHARE || ret == E_SHARED_MEM_EXISTS) return NULL;
-	 //cprintf("Smalloc : %x \n",ptr);
-
 
 	 ids[UHEAP_PAGE_INDEX((uint32)ptr)] =  ret;
 	 return ptr;

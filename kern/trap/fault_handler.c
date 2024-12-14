@@ -153,17 +153,17 @@ void fault_handler(struct Trapframe *tf)
 			//your code is here
 			if (fault_va >= USER_LIMIT)
 			{
-				cprintf("exit1\n");
+//				cprintf("exit1\n");
 				env_exit();
 			}
 			else if(((pt_get_page_permissions(faulted_env->env_page_directory,fault_va) & PERM_MARKED) != PERM_MARKED) && (fault_va>=USER_HEAP_START && fault_va<USER_HEAP_MAX))
 			{
-				cprintf("exit2\n");
+//				cprintf("exit2\n");
 				env_exit();
 			}
 			else if ((pt_get_page_permissions(faulted_env->env_page_directory,fault_va) & PERM_PRESENT) && (!(pt_get_page_permissions(faulted_env->env_page_directory,fault_va) & PERM_WRITEABLE)))
 			{
-				cprintf("exit3\n");
+//				cprintf("exit3\n");
 				env_exit();
 			}
 			//============================================================================================
@@ -282,9 +282,9 @@ void page_fault_handler(struct Env * faulted_env, uint32 fault_va)
 		//panic("page_fault_handler() Replacement is not implemented yet...!!");
 
 		struct WorkingSetElement *WS = faulted_env->page_last_WS_element;
-		cprintf("VA: %x\n",fault_va);
-		env_page_ws_print(faulted_env);
-		cprintf("N: %d\n",page_WS_max_sweeps);
+//		cprintf("VA: %x\n",fault_va);
+//		env_page_ws_print(faulted_env);
+//		cprintf("N: %d\n",page_WS_max_sweeps);
 		int max_sweeps = page_WS_max_sweeps;
 		if(page_WS_max_sweeps < 0) max_sweeps = (-1)*page_WS_max_sweeps;
 		while(1)
@@ -331,7 +331,7 @@ void page_fault_handler(struct Env * faulted_env, uint32 fault_va)
 			struct WorkingSetElement *temp=LIST_PREV(WS);
 			struct WorkingSetElement *temp2=LIST_NEXT(WS);
 			env_page_ws_invalidate(faulted_env,(uint32)WS->virtual_address);
-			env_page_ws_print(faulted_env);
+//			env_page_ws_print(faulted_env);
 			struct FrameInfo * ptr_frame=NULL;
 			int retk = allocate_frame(&ptr_frame);
 			if(retk == 0)
