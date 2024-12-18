@@ -254,12 +254,19 @@ void sched_init_PRIRR(uint8 numOfPriorities, uint8 quantum, uint32 starvThresh)
 	/*cprintf("\nProcessQueues.env_ready_queues = %d", ProcessQueues.env_ready_queues);
 	cprintf("\nstarve_threshold = %d", starve_threshold);
 	cprintf("\n*quantums = %d", *quantums);*/
-
-	ProcessQueues.env_ready_queues = kmalloc(numOfPriorities * sizeof(struct Env_Queue *));
-	quantums = kmalloc(sizeof(uint32));
-	*quantums = quantum;
+	acquire_spinlock(&ProcessQueues.qlock);
+	ProcessQueues.env_ready_queues = (struct Env_Queue *)kmalloc(numOfPriorities * sizeof(struct Env_Queue));
+	num_of_ready_queues = numOfPriorities;
+	quantums = (uint8 *)kmalloc(sizeof(uint8));
+	quantums[0] = quantum;
+	//kclock_set_quantum(quantums[0]);
+	//*quantums = quantum;
 	starve_threshold = starvThresh;
-
+	for(int i = 0;i<num_of_ready_queues;i++)
+	{
+		init_queue(&ProcessQueues.env_ready_queues[i]);
+	}
+	release_spinlock(&ProcessQueues.qlock);
 	/*cprintf("\nProcessQueues.env_ready_queues = %d", ProcessQueues.env_ready_queues);
 	cprintf("\nstarve_threshold = %d", starve_threshold);
 	cprintf("\n*quantums = %d", *quantums);*/
@@ -366,6 +373,7 @@ struct Env* fos_scheduler_PRIRR()
 		//int priority = myenv->priority;
 		//ProcessQueues.env_ready_queues
 		//myenv->env_status
+
 	}
 
 	//insert the next env to cpu
@@ -375,10 +383,11 @@ struct Env* fos_scheduler_PRIRR()
 		{
 			myenv = ProcessQueues.env_ready_queues[i].lh_first;
 			sched_remove_ready(ProcessQueues.env_ready_queues[i].lh_first);
-			goto sayed;
+			break;
+			//goto sayed;
 		}
 	}
-	sayed:
+	//sayed:
 	//*quantums = 0;
 	kclock_set_quantum(quantums[0]);
 	return myenv;
@@ -401,7 +410,7 @@ void clock_interrupt_handler(struct Trapframe* tf)
 
 		for(int i = 0 ; i < num_of_ready_queues ; i++)
 		{
-			int qsize = ProcessQueues.env_ready_queues[i].size;
+			int qsize = LIST_SIZE(&ProcessQueues.env_ready_queues[i]);
 			for(int j = 0 ; j < qsize ; j++)
 			{
 				struct Env *myenv = ProcessQueues.env_ready_queues[i].lh_first;
@@ -412,7 +421,7 @@ void clock_interrupt_handler(struct Trapframe* tf)
 					{
 						//acquire_spinlock(&ProcessQueues.qlock);
 						sched_remove_ready(myenv);
-						myenv->priority++;
+						myenv->priority--;
 						sched_insert_ready(myenv);
 						//release_spinlock(&ProcessQueues.qlock);
 					}
