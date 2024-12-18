@@ -261,7 +261,7 @@ void sched_init_PRIRR(uint8 numOfPriorities, uint8 quantum, uint32 starvThresh)
 	quantums[0] = quantum;
 	//kclock_set_quantum(quantums[0]);
 	//*quantums = quantum;
-	starve_threshold = starvThresh;
+	sched_set_starv_thresh(starvThresh);
 	for(int i = 0;i<num_of_ready_queues;i++)
 	{
 		init_queue(&ProcessQueues.env_ready_queues[i]);
@@ -381,8 +381,8 @@ struct Env* fos_scheduler_PRIRR()
 	{
 		if(ProcessQueues.env_ready_queues[i].size > 0)
 		{
-			myenv = ProcessQueues.env_ready_queues[i].lh_first;
-			sched_remove_ready(ProcessQueues.env_ready_queues[i].lh_first);
+			myenv = ProcessQueues.env_ready_queues[i].lh_last;
+			sched_remove_ready(ProcessQueues.env_ready_queues[i].lh_last);
 			break;
 			//goto sayed;
 		}
@@ -408,13 +408,12 @@ void clock_interrupt_handler(struct Trapframe* tf)
 		//Comment the following line
 		//panic("Not implemented yet");
 
+//		cprintf("HIIIIIIIII:: 411\n");
 		for(int i = 0 ; i < num_of_ready_queues ; i++)
 		{
-			int qsize = LIST_SIZE(&ProcessQueues.env_ready_queues[i]);
-			for(int j = 0 ; j < qsize ; j++)
+			struct Env *myenv = ProcessQueues.env_ready_queues[i].lh_last;
+			while(myenv != NULL)
 			{
-				struct Env *myenv = ProcessQueues.env_ready_queues[i].lh_first;
-
 				if(ticks > starve_threshold) //when is it updated?
 				{
 					if(i != 0)
@@ -426,9 +425,19 @@ void clock_interrupt_handler(struct Trapframe* tf)
 						//release_spinlock(&ProcessQueues.qlock);
 					}
 				}
+				myenv = LIST_PREV(myenv);
 				//myenv->nClocks;
-
 			}
+//			if(i != 0){
+//				struct Env *myenv = ProcessQueues.env_ready_queues[i - 1].lh_last;
+//				cprintf("Queue %d: ", i - 1);
+//				while(myenv != NULL)
+//				{
+//					cprintf("%d ", myenv->env_id);
+//					myenv = LIST_PREV(myenv);
+//				}
+//				cprintf("\n");
+//			}
 		}
 	}
 	release_spinlock(&ProcessQueues.qlock);
