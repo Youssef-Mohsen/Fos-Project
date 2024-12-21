@@ -287,6 +287,23 @@ void page_fault_handler(struct Env * faulted_env, uint32 fault_va)
 //		cprintf("N: %d\n",page_WS_max_sweeps);
 		int max_sweeps = page_WS_max_sweeps;
 		if(page_WS_max_sweeps < 0) max_sweeps = (-1)*page_WS_max_sweeps;
+//		struct WorkingSetElement *curr = NULL;
+//		struct WorkingSetElement *victim = NULL;
+//		int victim_x = 0;
+//		LIST_FOREACH(curr, &faulted_env->page_WS_list){
+//			if(!(pt_get_page_permissions(faulted_env->env_page_directory,(uint32)WS->virtual_address)&PERM_USED))
+//			{
+//				if(curr->sweeps_counter > victim_x){
+//					victim_x = curr->sweeps_counter;
+//					victim = curr;
+//				}
+//			}
+//			else{
+//				WS->sweeps_counter=0;
+//				pt_set_page_permissions(faulted_env->env_page_directory,(uint32)WS->virtual_address,0,PERM_USED); // not sure yet
+//			}
+//		}
+
 		while(1)
 		{
 			if(!(pt_get_page_permissions(faulted_env->env_page_directory,(uint32)WS->virtual_address)&PERM_USED))

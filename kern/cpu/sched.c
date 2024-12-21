@@ -369,12 +369,8 @@ struct Env* fos_scheduler_PRIRR()
 	if(myenv != NULL)
 	{
 		sched_insert_ready(myenv);
-
-		//int priority = myenv->priority;
-		//ProcessQueues.env_ready_queues
-		//myenv->env_status
-
 	}
+	myenv = NULL;
 
 	//insert the next env to cpu
 	for(int i = 0 ; i < num_of_ready_queues ; i++)
@@ -384,11 +380,8 @@ struct Env* fos_scheduler_PRIRR()
 			myenv = ProcessQueues.env_ready_queues[i].lh_last;
 			sched_remove_ready(ProcessQueues.env_ready_queues[i].lh_last);
 			break;
-			//goto sayed;
 		}
 	}
-	//sayed:
-	//*quantums = 0;
 	kclock_set_quantum(quantums[0]);
 	return myenv;
 }
@@ -414,26 +407,25 @@ void clock_interrupt_handler(struct Trapframe* tf)
 			struct Env *myenv = ProcessQueues.env_ready_queues[i].lh_last;
 			while(myenv != NULL)
 			{
-				if(ticks > starve_threshold) //when is it updated?
+				struct Env *nextenv = LIST_PREV(myenv);
+				myenv->env_ticks++;
+				if(myenv->env_ticks > starve_threshold && myenv->env_ticks % starve_threshold == 1) //when is it updated?
 				{
 					if(i != 0)
 					{
-						//acquire_spinlock(&ProcessQueues.qlock);
 						sched_remove_ready(myenv);
 						myenv->priority--;
 						sched_insert_ready(myenv);
-						//release_spinlock(&ProcessQueues.qlock);
 					}
 				}
-				myenv = LIST_PREV(myenv);
-				//myenv->nClocks;
+				myenv = nextenv;
 			}
 //			if(i != 0){
 //				struct Env *myenv = ProcessQueues.env_ready_queues[i - 1].lh_last;
 //				cprintf("Queue %d: ", i - 1);
 //				while(myenv != NULL)
 //				{
-//					cprintf("%d ", myenv->env_id);
+//					cprintf("%d,ticks:%d ", myenv->env_id, myenv->env_ticks);
 //					myenv = LIST_PREV(myenv);
 //				}
 //				cprintf("\n");
@@ -452,6 +444,8 @@ void clock_interrupt_handler(struct Trapframe* tf)
 	}
 	else
 	{
+		p->env_ticks = 0;
+//		cprintf("Running: %d ticks: %d\n", p->env_id, p->env_ticks);
 		p->nClocks++ ;
 		if(isPageReplacmentAlgorithmLRU(PG_REP_LRU_TIME_APPROX))
 		{

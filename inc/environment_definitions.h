@@ -184,7 +184,8 @@ struct Env {
 	//2020
 	uint32 nPageIn, nPageOut, nNewPageAdded;
 	uint32 nClocks ;
-
+	//2025
+	uint32 env_ticks;
 };
 
 #define PRIORITY_LOW    		1

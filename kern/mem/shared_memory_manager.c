@@ -269,8 +269,6 @@ int freeSharedObject(int32 sharedObjectID, void *startVA)
 			}
 
 
-
-
         ptr_share->references--;
 
         if(ptr_share->references < 1){

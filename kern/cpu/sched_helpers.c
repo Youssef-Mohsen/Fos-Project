@@ -719,12 +719,6 @@ void env_set_priority(int envID, int priority)
 		sched_remove_ready(proc);
 		sched_insert_ready(proc);
 	}
-	/*proc->priority = priority;
-	if(proc->env_status == ENV_READY)
-	{
-		sched_remove_ready(proc);
-		sched_insert_ready(proc);
-	}*/
 	release_spinlock(&ProcessQueues.qlock);
 }
 
