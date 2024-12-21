@@ -464,13 +464,84 @@ void env_start(void)
 void env_free(struct Env *e)
 {
 	/*REMOVE THIS LINE BEFORE START CODING*/
-	return;
+	//return;
 	/**************************************/
 
 	//[PROJECT'24.MS3] BONUS [EXIT ENV] env_free
 	// your code is here, remove the panic and write your code
-	panic("env_free() is not implemented yet...!!");
+	//panic("env_free() is not implemented yet...!!");
 
+	// [1] remove All pages in the page working set
+	/*LIST_FOREACH(wse, &(e->page_WS_list))
+	{
+		unmap_frame(e->env_page_directory, wse->virtual_address);
+
+		//LIST_REMOVE(&(e->page_WS_list), wse);
+
+		kfree((void *)wse);
+	}*/
+	struct WorkingSetElement *wse;
+	uint32 sz_list = LIST_SIZE(&(e->page_WS_list));
+	for (int i=0;i<sz_list;i++)
+	{
+		wse = LIST_FIRST(&(e->page_WS_list));
+
+		unmap_frame(e->env_page_directory, wse->virtual_address);
+
+		LIST_REMOVE(&(e->page_WS_list), wse);
+
+		kfree(wse);
+	}
+
+	// [2] remove Working set itself
+	//LIST_INIT(&(e->page_WS_list));
+	//kfree((e->page_WS_list));
+
+	// [3] remove ALL shared objects
+	struct Share* ptrShare = NULL;
+	struct Share* nextShare = NULL;
+	acquire_spinlock(&AllShares.shareslock);
+	nextShare = LIST_FIRST(&AllShares.shares_list);
+	uint32 sz_share = LIST_SIZE(&AllShares.shares_list);
+	release_spinlock(&AllShares.shareslock);
+	for (int i=0;i<sz_share;i++)
+	{
+		ptrShare = nextShare;
+		if (ptrShare->ownerID==e->env_id){
+			ptrShare->references--;
+			uint32 numOfFrames = ROUNDUP(ptrShare->size ,PAGE_SIZE) / PAGE_SIZE;
+			for(int i = 0 ;i< numOfFrames ;i++)
+			{
+				free_frame(ptrShare->framesStorage[i]);
+			}
+				acquire_spinlock(&AllShares.shareslock);
+				if (LIST_NEXT(ptrShare)!=NULL)
+				{
+					nextShare = LIST_NEXT(ptrShare);
+				}
+				LIST_REMOVE(&AllShares.shares_list,ptrShare);
+				release_spinlock(&AllShares.shareslock);
+				kfree((void*)ptrShare->framesStorage);
+				kfree((void*)ptrShare);
+		}
+
+	}
+	// [4] remove All page tables in the entire user virtual memory
+	for (int i=0;i<955;i++)
+	{
+		uint32 table_pa = e->env_page_directory[i] & 0xFFFFF000;
+		if (e->env_page_directory[i]!=0)
+		{
+			kfree((void*)kheap_virtual_address(table_pa));
+		}
+		e->env_page_directory[i]=0;
+	}
+
+    // [5] removeDirectory table
+	kfree((void *)e->env_page_directory);
+
+	// [5] remove User kernel stack
+	kfree((void *)e->kstack);
 
 	// [9] remove this program from the page file
 	/*(ALREADY DONE for you)*/
