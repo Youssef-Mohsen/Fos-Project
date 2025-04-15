@@ -3,4 +3,4 @@ FOS (Faculty of (Computer and Information Science) OS) is an educational OS for 
 It was created by Dr. Mahmoud Hossam and currently maintained by Dr. Ahmed Salah.
 
 # Our Work in the Project
-In this repository is my team's work on FOS. We implemented the memory manager, proccess scheduler and fault handler.
+In this repository is our team's work on FOS. We implemented the memory manager, proccess scheduler and fault handler.
